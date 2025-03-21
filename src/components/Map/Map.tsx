@@ -114,6 +114,37 @@ export const Map = () => {
   const handleLayerChange = (layer: UserPreferences['defaultMapLayer']) => {
     setMapStyle(layer);
     if (map.current) {
+      map.current.once('style.load', () => {
+        // Re-add route source and layer after style change
+        if (map.current) {
+          map.current.addSource(ROUTE_SOURCE_ID, {
+            type: 'geojson',
+            data: {
+              type: 'Feature',
+              properties: {},
+              geometry: {
+                type: 'LineString',
+                coordinates: []
+              }
+            }
+          });
+
+          map.current.addLayer({
+            id: ROUTE_LAYER_ID,
+            type: 'line',
+            source: ROUTE_SOURCE_ID,
+            layout: {
+              'line-join': 'round',
+              'line-cap': 'round'
+            },
+            paint: {
+              'line-color': '#4264fb',
+              'line-width': 4,
+              'line-opacity': 0.8
+            }
+          });
+        }
+      });
       map.current.setStyle(MAP_STYLES[layer]);
     }
   };
