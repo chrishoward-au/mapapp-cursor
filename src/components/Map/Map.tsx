@@ -111,59 +111,60 @@ export const Map = () => {
 
   return (
     <div className={styles.wrapper}>
-      <div ref={mapContainer} className={styles.mapContainer} />
-      <div className={styles.uiContainer}>
-        <div className={styles.layerToggle}>
-          <LayerToggle onLayerChange={handleLayerChange} />
-        </div>
-        
-        <div className={`${styles.panel} ${activePanel === 'none' ? styles.hidden : ''}`}>
-          {activePanel === 'locations' && (
-            <LocationList
-              locations={locations}
-              onLocationSelect={handleLocationSelect}
-              onLocationDelete={handleLocationDelete}
+      <div className={styles.mapWrapper}>
+        <div ref={mapContainer} className={styles.mapContainer} />
+        <div className={styles.mapUI}>
+          <div className={styles.layerToggle}>
+            <LayerToggle onLayerChange={handleLayerChange} />
+          </div>
+          {isMapInitialized && locations.map(location => (
+            <LocationMarker
+              key={location.id}
+              map={map.current}
+              location={location}
+              onClick={handleLocationSelect}
             />
-          )}
-          {activePanel === 'directions' && (
-            <DirectionsPanel
-              locations={locations}
-              onRouteSelect={handleRouteSelect}
-            />
-          )}
+          ))}
         </div>
+      </div>
 
-        <div className={styles.actionBar}>
-          <button
-            className={`${styles.actionButton} ${activePanel === 'locations' ? styles.active : ''}`}
-            onClick={() => togglePanel('locations')}
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-              <circle cx="12" cy="10" r="3"/>
-            </svg>
-            Locations
-          </button>
-          <button
-            className={`${styles.actionButton} ${activePanel === 'directions' ? styles.active : ''}`}
-            onClick={() => togglePanel('directions')}
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13"/>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
-            </svg>
-            Directions
-          </button>
-        </div>
-
-        {isMapInitialized && locations.map(location => (
-          <LocationMarker
-            key={location.id}
-            map={map.current}
-            location={location}
-            onClick={handleLocationSelect}
+      <div className={`${styles.panel} ${activePanel === 'none' ? styles.hidden : ''}`}>
+        {activePanel === 'locations' && (
+          <LocationList
+            locations={locations}
+            onLocationSelect={handleLocationSelect}
+            onLocationDelete={handleLocationDelete}
           />
-        ))}
+        )}
+        {activePanel === 'directions' && (
+          <DirectionsPanel
+            locations={locations}
+            onRouteSelect={handleRouteSelect}
+          />
+        )}
+      </div>
+
+      <div className={styles.actionBar}>
+        <button
+          className={`${styles.actionButton} ${activePanel === 'locations' ? styles.active : ''}`}
+          onClick={() => togglePanel('locations')}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+            <circle cx="12" cy="10" r="3"/>
+          </svg>
+          Locations
+        </button>
+        <button
+          className={`${styles.actionButton} ${activePanel === 'directions' ? styles.active : ''}`}
+          onClick={() => togglePanel('directions')}
+        >
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+          Directions
+        </button>
       </div>
     </div>
   );
