@@ -141,7 +141,7 @@ export const Map = () => {
     try {
       // Get route from Mapbox Directions API
       const query = await fetch(
-        `https://api.mapbox.com/directions/v5/mapbox/driving/${start.coordinates[0]},${start.coordinates[1]};${end.coordinates[0]},${end.coordinates[1]}?geometries=geojson&access_token=${mapboxgl.accessToken}`
+        `https://api.mapbox.com/directions/v5/mapbox/driving/${start.coordinates[0]},${start.coordinates[1]};${end.coordinates[0]},${end.coordinates[1]}?geometries=geojson&overview=full&steps=true&access_token=${mapboxgl.accessToken}`
       );
       const json = await query.json();
 
@@ -171,6 +171,12 @@ export const Map = () => {
           padding: 50,
           duration: 1000
         });
+
+        return {
+          distance: route.distance,
+          duration: route.duration,
+          steps: route.legs[0].steps
+        };
       }
     } catch (error) {
       console.error('Error fetching route:', error);

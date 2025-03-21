@@ -61,6 +61,70 @@
   cursor: not-allowed;
 }
 
+.routeInfo {
+  margin-top: 20px;
+  border-top: 1px solid #eee;
+  padding-top: 15px;
+}
+
+.routeSummary {
+  background: #f5f8ff;
+  border-radius: 4px;
+  padding: 12px;
+  margin-bottom: 15px;
+}
+
+.summaryItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: #333;
+}
+
+.summaryItem:not(:last-child) {
+  margin-bottom: 8px;
+}
+
+.label {
+  color: #666;
+}
+
+.value {
+  font-weight: 500;
+}
+
+.steps {
+  margin-top: 15px;
+}
+
+.steps h4 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+
+.step {
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.step:last-child {
+  border-bottom: none;
+}
+
+.stepInstruction {
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.stepDetails {
+  font-size: 12px;
+  color: #666;
+}
+
 /* Responsive styles */
 @media (max-width: 768px) {
   .directionsPanel {
@@ -74,5 +138,13 @@
 
   .locationSelect select {
     padding: 6px;
+  }
+
+  .routeSummary {
+    padding: 10px;
+  }
+
+  .step {
+    padding: 8px 0;
   }
 } 
