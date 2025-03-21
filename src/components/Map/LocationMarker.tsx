@@ -3,7 +3,7 @@ import mapboxgl from 'mapbox-gl';
 import { Location } from '../../types';
 
 interface LocationMarkerProps {
-  map: mapboxgl.Map;
+  map: mapboxgl.Map | null;
   location: Location;
   onClick?: (location: Location) => void;
 }
@@ -12,6 +12,8 @@ export const LocationMarker = ({ map, location, onClick }: LocationMarkerProps) 
   const markerRef = useRef<mapboxgl.Marker | null>(null);
 
   useEffect(() => {
+    if (!map) return;
+
     // Create marker element
     const el = document.createElement('div');
     el.className = 'location-marker';

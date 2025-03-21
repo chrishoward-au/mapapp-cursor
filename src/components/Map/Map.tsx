@@ -21,19 +21,13 @@ export const Map = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapStyle, setMapStyle] = useState<UserPreferences['defaultMapLayer']>('map');
-  const [locations, setLocations] = useState<Location[]>([]);
+  const [isMapInitialized, setIsMapInitialized] = useState(false);
+  const [locations, setLocations] = useState<Location[]>(() => {
+    // Initialize locations from storage on component mount
+    return storageService.getLocations();
+  });
 
-  // Load saved locations on mount
-  useEffect(() => {
-    const savedLocations = storageService.getLocations();
-    setLocations(savedLocations);
-  }, []);
-
-  // Save locations whenever they change
-  useEffect(() => {
-    storageService.saveLocations(locations);
-  }, [locations]);
-
+  // Initialize map and handle location persistence
   useEffect(() => {
     if (!mapContainer.current) return;
 
@@ -47,6 +41,11 @@ export const Map = () => {
 
     // Add navigation controls
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+    // Wait for map to load before setting initialized state
+    map.current.on('load', () => {
+      setIsMapInitialized(true);
+    });
 
     // Add click handler for adding locations
     map.current.on('click', (e) => {
@@ -67,8 +66,16 @@ export const Map = () => {
     // Cleanup on unmount
     return () => {
       map.current?.remove();
+      setIsMapInitialized(false);
     };
-  }, []);
+  }, [mapStyle]);
+
+  // Save locations whenever they change
+  useEffect(() => {
+    if (locations.length > 0 || storageService.getLocations().length > 0) {
+      storageService.saveLocations(locations);
+    }
+  }, [locations]);
 
   const handleLayerChange = (layer: UserPreferences['defaultMapLayer']) => {
     setMapStyle(layer);
@@ -91,21 +98,24 @@ export const Map = () => {
   };
 
   return (
-    <div ref={mapContainer} className={styles.mapContainer}>
-      <LayerToggle onLayerChange={handleLayerChange} />
-      <LocationList
-        locations={locations}
-        onLocationSelect={handleLocationSelect}
-        onLocationDelete={handleLocationDelete}
-      />
-      {map.current && locations.map(location => (
-        <LocationMarker
-          key={location.id}
-          map={map.current}
-          location={location}
-          onClick={handleLocationSelect}
+    <div className={styles.wrapper}>
+      <div ref={mapContainer} className={styles.mapContainer} />
+      <div className={styles.uiContainer}>
+        <LayerToggle onLayerChange={handleLayerChange} />
+        <LocationList
+          locations={locations}
+          onLocationSelect={handleLocationSelect}
+          onLocationDelete={handleLocationDelete}
         />
-      ))}
+        {isMapInitialized && locations.map(location => (
+          <LocationMarker
+            key={location.id}
+            map={map.current}
+            location={location}
+            onClick={handleLocationSelect}
+          />
+        ))}
+      </div>
     </div>
   );
 }; 
