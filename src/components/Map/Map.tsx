@@ -24,6 +24,7 @@ export const Map = () => {
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapStyle, setMapStyle] = useState<UserPreferences['defaultMapLayer']>('map');
   const [isMapInitialized, setIsMapInitialized] = useState(false);
+  const [activePanel, setActivePanel] = useState<'none' | 'locations' | 'directions'>('none');
   const [locations, setLocations] = useState<Location[]>(() => {
     // Initialize locations from storage on component mount
     return storageService.getLocations();
@@ -86,6 +87,10 @@ export const Map = () => {
     }
   };
 
+  const togglePanel = (panel: 'locations' | 'directions') => {
+    setActivePanel(current => current === panel ? 'none' : panel);
+  };
+
   const handleLocationSelect = (location: Location) => {
     if (map.current) {
       map.current.flyTo({
@@ -108,36 +113,41 @@ export const Map = () => {
     <div className={styles.wrapper}>
       <div ref={mapContainer} className={styles.mapContainer} />
       <div className={styles.uiContainer}>
-        <div className={styles.controls}>
-          <div className={styles.layerToggle}>
-            <LayerToggle onLayerChange={handleLayerChange} />
-          </div>
-          <TabPanel
-            tabs={[
-              {
-                id: 'locations',
-                label: 'Locations',
-                content: (
-                  <LocationList
-                    locations={locations}
-                    onLocationSelect={handleLocationSelect}
-                    onLocationDelete={handleLocationDelete}
-                  />
-                )
-              },
-              {
-                id: 'directions',
-                label: 'Directions',
-                content: (
-                  <DirectionsPanel
-                    locations={locations}
-                    onRouteSelect={handleRouteSelect}
-                  />
-                )
-              }
-            ]}
-          />
+        <div className={styles.layerToggle}>
+          <LayerToggle onLayerChange={handleLayerChange} />
         </div>
+        
+        <div className={`${styles.panel} ${activePanel === 'none' ? styles.hidden : ''}`}>
+          {activePanel === 'locations' && (
+            <LocationList
+              locations={locations}
+              onLocationSelect={handleLocationSelect}
+              onLocationDelete={handleLocationDelete}
+            />
+          )}
+          {activePanel === 'directions' && (
+            <DirectionsPanel
+              locations={locations}
+              onRouteSelect={handleRouteSelect}
+            />
+          )}
+        </div>
+
+        <div className={styles.actionBar}>
+          <button
+            className={`${styles.actionButton} ${activePanel === 'locations' ? styles.active : ''}`}
+            onClick={() => togglePanel('locations')}
+          >
+            📍 Locations
+          </button>
+          <button
+            className={`${styles.actionButton} ${activePanel === 'directions' ? styles.active : ''}`}
+            onClick={() => togglePanel('directions')}
+          >
+            🗺️ Directions
+          </button>
+        </div>
+
         {isMapInitialized && locations.map(location => (
           <LocationMarker
             key={location.id}
