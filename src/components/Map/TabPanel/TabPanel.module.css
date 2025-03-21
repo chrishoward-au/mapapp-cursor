@@ -1,24 +1,27 @@
 .tabPanel {
-  width: 300px;
+  width: 100%;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .tabs {
   display: flex;
   border-bottom: 1px solid #ddd;
-  margin-bottom: 15px;
   background: white;
   border-radius: 4px 4px 0 0;
 }
 
 .tab {
   flex: 1;
-  padding: 10px;
+  padding: 12px;
   border: none;
   background: none;
   font-size: 14px;
   cursor: pointer;
   color: #666;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .tab:hover {
@@ -34,4 +37,12 @@
 .content {
   background: white;
   border-radius: 0 0 4px 4px;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .tab {
+    padding: 10px 8px;
+    font-size: 13px;
+  }
 } 

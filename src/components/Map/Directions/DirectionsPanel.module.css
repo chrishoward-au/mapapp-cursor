@@ -9,7 +9,8 @@
 .title {
   margin: 0 0 15px;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
+  color: #333;
 }
 
 .locationSelect {
@@ -29,12 +30,13 @@
   border: 1px solid #ddd;
   border-radius: 4px;
   font-size: 14px;
-  background-color: white;
+  color: #333;
+  background: white;
 }
 
-.locationSelect select:focus {
-  outline: none;
-  border-color: #4264fb;
+.locationSelect select:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
 }
 
 .calculateButton {
@@ -45,8 +47,9 @@
   border: none;
   border-radius: 4px;
   font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background 0.2s;
 }
 
 .calculateButton:hover:not(:disabled) {
@@ -56,4 +59,20 @@
 .calculateButton:disabled {
   background: #ccc;
   cursor: not-allowed;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .directionsPanel {
+    padding: 12px;
+  }
+
+  .title {
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
+
+  .locationSelect select {
+    padding: 6px;
+  }
 } 

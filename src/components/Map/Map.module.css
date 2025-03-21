@@ -20,6 +20,11 @@
   height: 100%;
   pointer-events: none;
   z-index: 1;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 /* Ensure UI elements can receive pointer events */
@@ -33,4 +38,18 @@
   right: 10px;
   width: 300px;
   background: transparent;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .uiContainer {
+    padding: 5px;
+  }
+
+  .sidePanel {
+    width: calc(100% - 20px);
+    max-width: 300px;
+    top: auto;
+    bottom: 10px;
+  }
 } 
