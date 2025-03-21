@@ -1,0 +1,73 @@
+.locationList {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 300px;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  padding: 15px;
+  max-height: calc(100vh - 20px);
+  overflow-y: auto;
+}
+
+.title {
+  margin: 0 0 15px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.emptyState {
+  color: #666;
+  font-size: 14px;
+  text-align: center;
+  margin: 20px 0;
+}
+
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.listItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.locationButton {
+  flex: 1;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.locationButton:hover {
+  background: #e5e5e5;
+  border-color: #ccc;
+}
+
+.deleteButton {
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  color: #666;
+  transition: all 0.2s ease;
+}
+
+.deleteButton:hover {
+  background: #ff4444;
+  color: white;
+  border-color: #ff4444;
+} 
