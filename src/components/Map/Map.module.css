@@ -32,12 +32,19 @@
   pointer-events: auto;
 }
 
-.sidePanel {
-  position: absolute;
-  top: 10px;
-  right: 10px;
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-left: auto;
   width: 300px;
-  background: transparent;
+}
+
+.layerToggle {
+  background: white;
+  padding: 8px;
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 /* Responsive styles */
@@ -46,10 +53,10 @@
     padding: 5px;
   }
 
-  .sidePanel {
-    width: calc(100% - 20px);
+  .controls {
+    width: calc(100% - 10px);
     max-width: 300px;
-    top: auto;
-    bottom: 10px;
+    margin-top: auto;
+    margin-bottom: 10px;
   }
 } 

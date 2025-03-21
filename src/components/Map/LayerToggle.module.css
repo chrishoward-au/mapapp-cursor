@@ -1,17 +1,11 @@
 .layerToggle {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 1;
-  background: white;
-  border-radius: 4px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  padding: 5px;
   display: flex;
   gap: 5px;
+  width: 100%;
 }
 
 .toggleButton {
+  flex: 1;
   padding: 8px 16px;
   border: 1px solid #ddd;
   background: white;

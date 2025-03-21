@@ -108,8 +108,10 @@ export const Map = () => {
     <div className={styles.wrapper}>
       <div ref={mapContainer} className={styles.mapContainer} />
       <div className={styles.uiContainer}>
-        <LayerToggle onLayerChange={handleLayerChange} />
-        <div className={styles.sidePanel}>
+        <div className={styles.controls}>
+          <div className={styles.layerToggle}>
+            <LayerToggle onLayerChange={handleLayerChange} />
+          </div>
           <TabPanel
             tabs={[
               {
