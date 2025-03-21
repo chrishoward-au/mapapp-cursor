@@ -7,6 +7,7 @@ import { LocationMarker } from './LocationMarker';
 import { LocationList } from './LocationList';
 import { Location, UserPreferences } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
+import { storageService } from '../../services/storage';
 
 // Initialize Mapbox access token
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
@@ -21,6 +22,17 @@ export const Map = () => {
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapStyle, setMapStyle] = useState<UserPreferences['defaultMapLayer']>('map');
   const [locations, setLocations] = useState<Location[]>([]);
+
+  // Load saved locations on mount
+  useEffect(() => {
+    const savedLocations = storageService.getLocations();
+    setLocations(savedLocations);
+  }, []);
+
+  // Save locations whenever they change
+  useEffect(() => {
+    storageService.saveLocations(locations);
+  }, [locations]);
 
   useEffect(() => {
     if (!mapContainer.current) return;
