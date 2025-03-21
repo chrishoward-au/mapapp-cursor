@@ -33,7 +33,7 @@ export const Map = () => {
     return storageService.getLocations();
   });
 
-  // Initialize map and handle location persistence
+  // Initialize map
   useEffect(() => {
     if (!mapContainer.current) return;
 
@@ -50,35 +50,8 @@ export const Map = () => {
 
     // Wait for map to load before setting initialized state
     map.current.on('load', () => {
+      addRouteLayer();
       setIsMapInitialized(true);
-
-      // Add route source and layer
-      map.current?.addSource(ROUTE_SOURCE_ID, {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: []
-          }
-        }
-      });
-
-      map.current?.addLayer({
-        id: ROUTE_LAYER_ID,
-        type: 'line',
-        source: ROUTE_SOURCE_ID,
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': '#4264fb',
-          'line-width': 4,
-          'line-opacity': 0.8
-        }
-      });
     });
 
     // Add click handler for adding locations
@@ -102,6 +75,17 @@ export const Map = () => {
       map.current?.remove();
       setIsMapInitialized(false);
     };
+  }, []); // Empty dependency array for single initialization
+
+  // Handle map style changes
+  useEffect(() => {
+    if (!map.current) return;
+    
+    map.current.once('style.load', () => {
+      addRouteLayer();
+    });
+    
+    map.current.setStyle(MAP_STYLES[mapStyle]);
   }, [mapStyle]);
 
   // Save locations whenever they change
@@ -111,42 +95,49 @@ export const Map = () => {
     }
   }, [locations]);
 
-  const handleLayerChange = (layer: UserPreferences['defaultMapLayer']) => {
-    setMapStyle(layer);
-    if (map.current) {
-      map.current.once('style.load', () => {
-        // Re-add route source and layer after style change
-        if (map.current) {
-          map.current.addSource(ROUTE_SOURCE_ID, {
-            type: 'geojson',
-            data: {
-              type: 'Feature',
-              properties: {},
-              geometry: {
-                type: 'LineString',
-                coordinates: []
-              }
-            }
-          });
+  const addRouteLayer = () => {
+    if (!map.current) return;
 
-          map.current.addLayer({
-            id: ROUTE_LAYER_ID,
-            type: 'line',
-            source: ROUTE_SOURCE_ID,
-            layout: {
-              'line-join': 'round',
-              'line-cap': 'round'
-            },
-            paint: {
-              'line-color': '#4264fb',
-              'line-width': 4,
-              'line-opacity': 0.8
-            }
-          });
-        }
-      });
-      map.current.setStyle(MAP_STYLES[layer]);
+    // Check if source already exists and remove it
+    if (map.current.getSource(ROUTE_SOURCE_ID)) {
+      if (map.current.getLayer(ROUTE_LAYER_ID)) {
+        map.current.removeLayer(ROUTE_LAYER_ID);
+      }
+      map.current.removeSource(ROUTE_SOURCE_ID);
     }
+
+    // Add route source and layer
+    map.current.addSource(ROUTE_SOURCE_ID, {
+      type: 'geojson',
+      data: {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: []
+        }
+      }
+    });
+
+    map.current.addLayer({
+      id: ROUTE_LAYER_ID,
+      type: 'line',
+      source: ROUTE_SOURCE_ID,
+      layout: {
+        'line-join': 'round',
+        'line-cap': 'round'
+      },
+      paint: {
+        'line-color': '#4264fb',
+        'line-width': 4,
+        'line-opacity': 0.8
+      }
+    });
+  };
+
+  const handleLayerChange = (layer: UserPreferences['defaultMapLayer']) => {
+    if (!map.current) return;
+    setMapStyle(layer);
   };
 
   const togglePanel = (panel: 'locations' | 'directions') => {
@@ -218,18 +209,18 @@ export const Map = () => {
     <div className={styles.wrapper}>
       <div className={styles.mapWrapper}>
         <div ref={mapContainer} className={styles.mapContainer} />
+        {isMapInitialized && map.current && locations.map(location => (
+          <LocationMarker
+            key={location.id}
+            map={map.current}
+            location={location}
+            onClick={handleLocationSelect}
+          />
+        ))}
         <div className={styles.mapUI}>
           <div className={styles.layerToggle}>
             <LayerToggle onLayerChange={handleLayerChange} />
           </div>
-          {isMapInitialized && locations.map(location => (
-            <LocationMarker
-              key={location.id}
-              map={map.current}
-              location={location}
-              onClick={handleLocationSelect}
-            />
-          ))}
         </div>
       </div>
 
@@ -254,21 +245,19 @@ export const Map = () => {
           className={`${styles.actionButton} ${activePanel === 'locations' ? styles.active : ''}`}
           onClick={() => togglePanel('locations')}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
             <circle cx="12" cy="10" r="3"/>
           </svg>
-          Locations
         </button>
         <button
           className={`${styles.actionButton} ${activePanel === 'directions' ? styles.active : ''}`}
           onClick={() => togglePanel('directions')}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="22" y1="2" x2="11" y2="13"/>
             <polygon points="22 2 15 22 11 13 2 9 22 2"/>
           </svg>
-          Directions
         </button>
       </div>
     </div>
