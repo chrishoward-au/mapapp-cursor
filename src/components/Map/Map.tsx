@@ -5,6 +5,8 @@ import styles from './Map.module.css';
 import { LayerToggle } from './LayerToggle';
 import { LocationMarker } from './LocationMarker';
 import { LocationList } from './LocationList';
+import { DirectionsPanel } from './Directions/DirectionsPanel';
+import { TabPanel } from './TabPanel/TabPanel';
 import { Location, UserPreferences } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import { storageService } from '../../services/storage';
@@ -97,16 +99,43 @@ export const Map = () => {
     setLocations(prev => prev.filter(loc => loc.id !== locationId));
   };
 
+  const handleRouteSelect = (start: Location, end: Location) => {
+    // TODO: Implement route calculation in next version
+    console.log('Calculating route from', start.name, 'to', end.name);
+  };
+
   return (
     <div className={styles.wrapper}>
       <div ref={mapContainer} className={styles.mapContainer} />
       <div className={styles.uiContainer}>
         <LayerToggle onLayerChange={handleLayerChange} />
-        <LocationList
-          locations={locations}
-          onLocationSelect={handleLocationSelect}
-          onLocationDelete={handleLocationDelete}
-        />
+        <div className={styles.sidePanel}>
+          <TabPanel
+            tabs={[
+              {
+                id: 'locations',
+                label: 'Locations',
+                content: (
+                  <LocationList
+                    locations={locations}
+                    onLocationSelect={handleLocationSelect}
+                    onLocationDelete={handleLocationDelete}
+                  />
+                )
+              },
+              {
+                id: 'directions',
+                label: 'Directions',
+                content: (
+                  <DirectionsPanel
+                    locations={locations}
+                    onRouteSelect={handleRouteSelect}
+                  />
+                )
+              }
+            ]}
+          />
+        </div>
         {isMapInitialized && locations.map(location => (
           <LocationMarker
             key={location.id}

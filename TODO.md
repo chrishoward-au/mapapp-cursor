@@ -19,7 +19,7 @@
 - [x] Add location persistence in local storage
 
 ## Phase 3: Directions
-- [ ] Add location selection for routes
+- [x] Add location selection for routes
 - [ ] Implement route calculation
 - [ ] Create turn-by-turn directions display
 - [ ] Add route summary component
@@ -56,14 +56,14 @@
 - [ ] Create contribution guidelines
 
 ## Current Focus
-- Add location editing functionality
-- Implement location search/filter capabilities
-- Begin work on directions feature
+- Implement route calculation using Mapbox Directions API
+- Create turn-by-turn directions display
+- Add route summary component
 
 ## Recently Completed
-- Fixed map container warning and UI layout
-- Implemented location persistence with local storage
-- Improved component structure and type safety
+- Added directions panel with location selection
+- Implemented tab interface for better UI organization
+- Set up basic route selection functionality
 
 ---
 Last Updated: 2024-03-21 
