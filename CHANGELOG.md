@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.10] - 2024-03-21
+
+### Added
+- Implemented route plotting using Mapbox Directions API
+- Added route visualization with blue line on map
+- Auto-zoom to show entire route when selected
+- Proper route layer management with GeoJSON source
+
 ## [0.0.9] - 2024-03-21
 
 ### Changed

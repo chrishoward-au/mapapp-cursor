@@ -19,6 +19,9 @@ const MAP_STYLES = {
   satellite: 'mapbox://styles/mapbox/satellite-streets-v12'
 };
 
+const ROUTE_SOURCE_ID = 'route';
+const ROUTE_LAYER_ID = 'route-line';
+
 export const Map = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
@@ -48,6 +51,34 @@ export const Map = () => {
     // Wait for map to load before setting initialized state
     map.current.on('load', () => {
       setIsMapInitialized(true);
+
+      // Add route source and layer
+      map.current?.addSource(ROUTE_SOURCE_ID, {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: []
+          }
+        }
+      });
+
+      map.current?.addLayer({
+        id: ROUTE_LAYER_ID,
+        type: 'line',
+        source: ROUTE_SOURCE_ID,
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#4264fb',
+          'line-width': 4,
+          'line-opacity': 0.8
+        }
+      });
     });
 
     // Add click handler for adding locations
@@ -104,9 +135,46 @@ export const Map = () => {
     setLocations(prev => prev.filter(loc => loc.id !== locationId));
   };
 
-  const handleRouteSelect = (start: Location, end: Location) => {
-    // TODO: Implement route calculation in next version
-    console.log('Calculating route from', start.name, 'to', end.name);
+  const handleRouteSelect = async (start: Location, end: Location) => {
+    if (!map.current) return;
+
+    try {
+      // Get route from Mapbox Directions API
+      const query = await fetch(
+        `https://api.mapbox.com/directions/v5/mapbox/driving/${start.coordinates[0]},${start.coordinates[1]};${end.coordinates[0]},${end.coordinates[1]}?geometries=geojson&access_token=${mapboxgl.accessToken}`
+      );
+      const json = await query.json();
+
+      if (json.routes?.[0]) {
+        const route = json.routes[0];
+        const coordinates = route.geometry.coordinates;
+
+        // Update route on the map
+        if (map.current.getSource(ROUTE_SOURCE_ID)) {
+          (map.current.getSource(ROUTE_SOURCE_ID) as mapboxgl.GeoJSONSource).setData({
+            type: 'Feature',
+            properties: {},
+            geometry: {
+              type: 'LineString',
+              coordinates
+            }
+          });
+        }
+
+        // Fit map to route bounds
+        const bounds = coordinates.reduce(
+          (bounds: mapboxgl.LngLatBounds, coord: [number, number]) => bounds.extend(coord),
+          new mapboxgl.LngLatBounds(coordinates[0] as [number, number], coordinates[0] as [number, number])
+        );
+
+        map.current.fitBounds(bounds, {
+          padding: 50,
+          duration: 1000
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching route:', error);
+    }
   };
 
   return (
