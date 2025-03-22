@@ -100,6 +100,15 @@
   stroke: #60a5fa;
 }
 
+.actionButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+:global(.dark) .actionButton:disabled {
+  opacity: 0.4;
+}
+
 .panel {
   background: white;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);

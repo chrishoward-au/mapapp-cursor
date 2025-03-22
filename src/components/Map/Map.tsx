@@ -365,6 +365,25 @@ export const Map = () => {
     setNewLocationCoordinates(null);
   };
 
+  // Add handler for fitting the map to show all markers
+  const handleFitAllMarkers = () => {
+    if (!map.current || locations.length === 0) return;
+    
+    // Create a new bounds object
+    const bounds = new mapboxgl.LngLatBounds();
+    
+    // Extend the bounds to include all marker locations
+    locations.forEach(location => {
+      bounds.extend(location.coordinates as [number, number]);
+    });
+    
+    // Fit the map to the bounds with some padding
+    map.current.fitBounds(bounds, {
+      padding: 50,
+      duration: 1000
+    });
+  };
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.mapWrapper}>
@@ -424,6 +443,20 @@ export const Map = () => {
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="22" y1="2" x2="11" y2="13"/>
             <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+        
+        <button
+          className={`${styles.actionButton}`}
+          onClick={handleFitAllMarkers}
+          title="View all locations"
+          disabled={locations.length === 0}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 3h7v7H3z"/>
+            <path d="M14 3h7v7h-7z"/>
+            <path d="M14 14h7v7h-7z"/>
+            <path d="M3 14h7v7H3z"/>
           </svg>
         </button>
         

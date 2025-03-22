@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.15] - 2025-03-22
+
+### Added
+- "View all locations" button to zoom the map to show all saved locations at once
+- Disabled state styling for action buttons when the action is not available
+
 ## [0.3.14] - 2025-03-22
 
 ### Changed
