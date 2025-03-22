@@ -22,7 +22,7 @@ export const LocationMarker = ({ map, location, onClick }: LocationMarkerProps) 
       // Create and add the marker
       const marker = new mapboxgl.Marker({ 
         color: '#4264fb',
-        scale: 0.8 // Make markers smaller (default is 1)
+        scale: 0.7 // Make markers smaller (default is 1)
       })
         .setLngLat(location.coordinates)
         .addTo(map);

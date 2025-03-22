@@ -25,12 +25,27 @@ export const Map = () => {
   const map = useRef<mapboxgl.Map | null>(null);
   const [isMapInitialized, setIsMapInitialized] = useState(false);
   const [activePanel, setActivePanel] = useState<'none' | 'locations' | 'directions'>('none');
-  const [locations, setLocations] = useState<Location[]>(() => {
-    // Initialize locations from storage on component mount
-    return storageService.getLocations();
-  });
+  const [locations, setLocations] = useState<Location[]>([]);
   const [mapStyle, setMapStyle] = useState<UserPreferences['defaultMapLayer']>('map');
   const [markersKey, setMarkersKey] = useState(0); // Add a key to force marker re-creation
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Load locations from storage on component mount
+  useEffect(() => {
+    const loadLocations = async () => {
+      try {
+        setIsLoading(true);
+        const storedLocations = await storageService.getLocations();
+        setLocations(storedLocations);
+      } catch (error) {
+        console.error('Failed to load locations:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadLocations();
+  }, []);
 
   // Initialize map
   useEffect(() => {
@@ -109,10 +124,18 @@ export const Map = () => {
 
   // Save locations whenever they change
   useEffect(() => {
-    if (locations.length > 0 || storageService.getLocations().length > 0) {
-      storageService.saveLocations(locations);
-    }
-  }, [locations]);
+    if (isLoading) return; // Don't save during initial load
+    
+    const saveLocationsToStorage = async () => {
+      try {
+        await storageService.saveLocations(locations);
+      } catch (error) {
+        console.error('Failed to save locations:', error);
+      }
+    };
+    
+    saveLocationsToStorage();
+  }, [locations, isLoading]);
 
   const addRouteLayer = () => {
     if (!map.current) return;
@@ -237,7 +260,7 @@ export const Map = () => {
             {locations.map(location => (
               <LocationMarker
                 key={location.id}
-                map={map.current}
+                map={map.current as mapboxgl.Map}
                 location={location}
                 onClick={handleLocationSelect}
               />
