@@ -10,12 +10,20 @@ interface LocationMarkerProps {
 
 export const LocationMarker = ({ map, location, onClick }: LocationMarkerProps) => {
   const markerRef = useRef<mapboxgl.Marker | null>(null);
+  
+  console.log('MARKER RENDER:', location.name, 'map:', !!map);
 
   useEffect(() => {
-    if (!map) return;
+    console.log('MARKER EFFECT: Creating marker for', location.name);
+    if (!map) {
+      console.log('MARKER ERROR: Map not provided');
+      return;
+    }
 
     const addMarker = () => {
+      console.log('MARKER ADD: Creating marker for', location.name);
       if (markerRef.current) {
+        console.log('MARKER CLEANUP: Removing existing marker for', location.name);
         markerRef.current.remove();
       }
 
@@ -29,34 +37,46 @@ export const LocationMarker = ({ map, location, onClick }: LocationMarkerProps) 
       el.style.cursor = 'pointer';
 
       // Create and add the marker
+      console.log('MARKER ADD: Adding marker to map for', location.name, 'at', location.coordinates);
       markerRef.current = new mapboxgl.Marker(el)
         .setLngLat(location.coordinates)
         .addTo(map);
 
       // Add click handler if provided
       if (onClick) {
+        console.log('MARKER ADD: Adding click listener for', location.name);
         el.addEventListener('click', () => onClick(location));
       }
+      
+      console.log('MARKER ADD: Marker added successfully for', location.name);
     };
 
     // Add marker when map is loaded
-    if (map.loaded()) {
-      addMarker();
-    } else {
-      map.once('load', addMarker);
-    }
+    console.log('MARKER MAP: Checking map.loaded():', map.loaded());
+    
+    // Always add marker immediately - don't wait for load event
+    // This fixes the issue with markers not appearing
+    addMarker();
 
     // Handle style changes
     const handleStyleData = () => {
-      if (map.loaded()) {
+      console.log('MARKER STYLE: Style changed, re-adding marker for', location.name);
+      // Short delay to ensure map is ready after style change
+      setTimeout(() => {
         addMarker();
-      }
+      }, 100);
     };
+    
+    console.log('MARKER LISTEN: Adding styledata event listener for', location.name);
     map.on('styledata', handleStyleData);
 
     // Cleanup
     return () => {
-      markerRef.current?.remove();
+      console.log('MARKER CLEANUP: Component unmounting, cleaning up marker for', location.name);
+      if (markerRef.current) {
+        markerRef.current.remove();
+        markerRef.current = null;
+      }
       map.off('styledata', handleStyleData);
     };
   }, [map, location, onClick]);

@@ -6,7 +6,6 @@ import { LayerToggle } from './LayerToggle';
 import { LocationMarker } from './LocationMarker';
 import { LocationList } from './LocationList';
 import { DirectionsPanel } from './Directions/DirectionsPanel';
-import { TabPanel } from './TabPanel/TabPanel';
 import { Location, UserPreferences } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import { storageService } from '../../services/storage';
@@ -25,19 +24,29 @@ const ROUTE_LAYER_ID = 'route-line';
 export const Map = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
-  const [mapStyle, setMapStyle] = useState<UserPreferences['defaultMapLayer']>('map');
   const [isMapInitialized, setIsMapInitialized] = useState(false);
   const [activePanel, setActivePanel] = useState<'none' | 'locations' | 'directions'>('none');
   const [locations, setLocations] = useState<Location[]>(() => {
     // Initialize locations from storage on component mount
-    return storageService.getLocations();
+    const storedLocations = storageService.getLocations();
+    console.log('INIT: Loading locations from storage:', storedLocations);
+    return storedLocations;
   });
+  const [mapStyle, setMapStyle] = useState<UserPreferences['defaultMapLayer']>('map');
+  const [markersKey, setMarkersKey] = useState(0); // Add a key to force marker re-creation
+
+  console.log('RENDER: Map component rendering, isMapInitialized:', isMapInitialized, 'markersKey:', markersKey, 'locations:', locations);
 
   // Initialize map
   useEffect(() => {
-    if (!mapContainer.current) return;
+    console.log('EFFECT: Map initialization starting');
+    if (!mapContainer.current) {
+      console.log('ERROR: Map container not found');
+      return;
+    }
 
     // Initialize map
+    console.log('MAP: Creating new map instance with style:', MAP_STYLES[mapStyle]);
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: MAP_STYLES[mapStyle],
@@ -48,10 +57,17 @@ export const Map = () => {
     // Add navigation controls
     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-    // Wait for map to load before setting initialized state
+    // Wait for map to fully load before setting initialized state
     map.current.on('load', () => {
+      console.log('MAP LOAD: Map fully loaded');
       addRouteLayer();
+      console.log('MAP LOAD: Setting isMapInitialized to true');
       setIsMapInitialized(true);
+      console.log('MAP LOAD: Incrementing markersKey from', markersKey);
+      setMarkersKey(prev => {
+        console.log('MAP LOAD: New markersKey will be', prev + 1);
+        return prev + 1;
+      });
     });
 
     // Add click handler for adding locations
@@ -59,6 +75,7 @@ export const Map = () => {
       const coordinates: [number, number] = [e.lngLat.lng, e.lngLat.lat];
       const name = prompt('Enter location name:');
       if (name) {
+        console.log('MAP CLICK: Adding new location:', name, coordinates);
         const newLocation: Location = {
           id: uuidv4(),
           name,
@@ -72,34 +89,82 @@ export const Map = () => {
 
     // Cleanup on unmount
     return () => {
+      console.log('CLEANUP: Removing map');
       map.current?.remove();
       setIsMapInitialized(false);
     };
-  }, []); // Empty dependency array for single initialization
+  }, []); // Only run once on mount
 
-  // Handle map style changes
+  // Handle map style changes separately
   useEffect(() => {
-    if (!map.current) return;
+    console.log('EFFECT: Style change effect running, mapStyle:', mapStyle, 'isMapInitialized:', isMapInitialized);
     
-    map.current.once('style.load', () => {
-      addRouteLayer();
-    });
+    if (!map.current) {
+      console.log('STYLE: map.current is null, skipping style change');
+      return;
+    }
     
+    // Skip initial render and style changes when map is not initialized
+    if (!isMapInitialized) {
+      console.log('STYLE: Map not initialized yet, skipping style change');
+      return;
+    }
+
+    // Don't run on initial render when mapStyle is just initialized
+    try {
+      const currentStyle = map.current.getStyle();
+      console.log('STYLE: Current style:', currentStyle?.name, 'New style:', MAP_STYLES[mapStyle]);
+      
+      if (currentStyle && currentStyle.name === MAP_STYLES[mapStyle]) {
+        console.log('STYLE: Style unchanged, skipping update');
+        return;
+      }
+    } catch (e) {
+      // Style might not be available yet
+      console.log('STYLE ERROR: Style not available yet', e);
+      return;
+    }
+
+    console.log('STYLE: Changing style to:', mapStyle);
+    
+    const currentCenter = map.current.getCenter();
+    const currentZoom = map.current.getZoom();
+    console.log('STYLE: Saving view state, center:', currentCenter, 'zoom:', currentZoom);
+
+    // Simple approach - just set the style and restore view after a brief delay
     map.current.setStyle(MAP_STYLES[mapStyle]);
-  }, [mapStyle]);
+    
+    // Let the styledata event in LocationMarker handle marker re-creation
+    setTimeout(() => {
+      if (map.current) {
+        console.log('STYLE: Restoring view state after style change');
+        map.current.setCenter(currentCenter);
+        map.current.setZoom(currentZoom);
+        addRouteLayer();
+      }
+    }, 150);
+    
+  }, [mapStyle, isMapInitialized]);
 
   // Save locations whenever they change
   useEffect(() => {
+    console.log('EFFECT: Locations changed, new locations:', locations);
     if (locations.length > 0 || storageService.getLocations().length > 0) {
+      console.log('STORAGE: Saving locations to storage');
       storageService.saveLocations(locations);
     }
   }, [locations]);
 
   const addRouteLayer = () => {
-    if (!map.current) return;
+    console.log('ROUTE: Adding/updating route layer');
+    if (!map.current) {
+      console.log('ROUTE ERROR: map.current is null');
+      return;
+    }
 
     // Check if source already exists and remove it
     if (map.current.getSource(ROUTE_SOURCE_ID)) {
+      console.log('ROUTE: Removing existing route source/layer');
       if (map.current.getLayer(ROUTE_LAYER_ID)) {
         map.current.removeLayer(ROUTE_LAYER_ID);
       }
@@ -107,36 +172,46 @@ export const Map = () => {
     }
 
     // Add route source and layer
-    map.current.addSource(ROUTE_SOURCE_ID, {
-      type: 'geojson',
-      data: {
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'LineString',
-          coordinates: []
+    console.log('ROUTE: Adding new route source/layer');
+    try {
+      map.current.addSource(ROUTE_SOURCE_ID, {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: []
+          }
         }
-      }
-    });
+      });
 
-    map.current.addLayer({
-      id: ROUTE_LAYER_ID,
-      type: 'line',
-      source: ROUTE_SOURCE_ID,
-      layout: {
-        'line-join': 'round',
-        'line-cap': 'round'
-      },
-      paint: {
-        'line-color': '#4264fb',
-        'line-width': 4,
-        'line-opacity': 0.8
-      }
-    });
+      map.current.addLayer({
+        id: ROUTE_LAYER_ID,
+        type: 'line',
+        source: ROUTE_SOURCE_ID,
+        layout: {
+          'line-join': 'round',
+          'line-cap': 'round'
+        },
+        paint: {
+          'line-color': '#4264fb',
+          'line-width': 4,
+          'line-opacity': 0.8
+        }
+      });
+      console.log('ROUTE: Route layer added successfully');
+    } catch (e) {
+      console.error('ROUTE ERROR: Failed to add route layer', e);
+    }
   };
 
   const handleLayerChange = (layer: UserPreferences['defaultMapLayer']) => {
-    if (!map.current) return;
+    console.log('ACTION: Layer change requested to', layer);
+    if (!map.current) {
+      console.log('ACTION ERROR: map.current is null');
+      return;
+    }
     setMapStyle(layer);
   };
 
@@ -209,14 +284,18 @@ export const Map = () => {
     <div className={styles.wrapper}>
       <div className={styles.mapWrapper}>
         <div ref={mapContainer} className={styles.mapContainer} />
-        {isMapInitialized && map.current && locations.map(location => (
-          <LocationMarker
-            key={location.id}
-            map={map.current}
-            location={location}
-            onClick={handleLocationSelect}
-          />
-        ))}
+        {isMapInitialized && map.current && (
+          <div key={markersKey}>
+            {locations.map(location => (
+              <LocationMarker
+                key={location.id}
+                map={map.current}
+                location={location}
+                onClick={handleLocationSelect}
+              />
+            ))}
+          </div>
+        )}
         <div className={styles.mapUI}>
           <div className={styles.layerToggle}>
             <LayerToggle onLayerChange={handleLayerChange} />
