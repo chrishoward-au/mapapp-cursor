@@ -19,6 +19,8 @@ const MAP_STYLES = {
 
 const ROUTE_SOURCE_ID = 'route';
 const ROUTE_LAYER_ID = 'route-line';
+const DEFAULT_LOCATION: [number, number] = [144.9631, -37.8136]; // Melbourne, Australia [lng, lat]
+const DEFAULT_ZOOM = 10;
 
 export const Map = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -47,43 +49,83 @@ export const Map = () => {
     loadLocations();
   }, []);
 
+  // Get the user's location using browser's geolocation
+  const getUserLocation = (): Promise<[number, number]> => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation is not supported by your browser'));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { longitude, latitude } = position.coords;
+          resolve([longitude, latitude]);
+        },
+        (error) => {
+          console.warn('Geolocation error:', error.message);
+          reject(error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        }
+      );
+    });
+  };
+
   // Initialize map
   useEffect(() => {
-    if (!mapContainer.current) return;
+    const containerElement = mapContainer.current;
+    if (!containerElement) return;
 
-    // Initialize map
-    map.current = new mapboxgl.Map({
-      container: mapContainer.current,
-      style: MAP_STYLES[mapStyle],
-      center: [-74.5, 40],
-      zoom: 9
-    });
-
-    // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-
-    // Wait for map to fully load before setting initialized state
-    map.current.on('load', () => {
-      addRouteLayer();
-      setIsMapInitialized(true);
-      setMarkersKey(prev => prev + 1);
-    });
-
-    // Add click handler for adding locations
-    map.current.on('click', (e) => {
-      const coordinates: [number, number] = [e.lngLat.lng, e.lngLat.lat];
-      const name = prompt('Enter location name:');
-      if (name) {
-        const newLocation: Location = {
-          id: uuidv4(),
-          name,
-          coordinates,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
-        setLocations(prev => [...prev, newLocation]);
+    const initMap = async () => {
+      // Try to get user location, default to Melbourne if not available
+      let initialCenter: [number, number] = DEFAULT_LOCATION;
+      try {
+        initialCenter = await getUserLocation();
+        console.info('Using user location:', initialCenter);
+      } catch (error) {
+        console.info('Using default location (Melbourne):', DEFAULT_LOCATION);
       }
-    });
+
+      // Initialize map
+      map.current = new mapboxgl.Map({
+        container: containerElement,
+        style: MAP_STYLES[mapStyle],
+        center: initialCenter,
+        zoom: DEFAULT_ZOOM
+      });
+
+      // Add navigation controls
+      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+      // Wait for map to fully load before setting initialized state
+      map.current.on('load', () => {
+        addRouteLayer();
+        setIsMapInitialized(true);
+        setMarkersKey(prev => prev + 1);
+      });
+
+      // Add click handler for adding locations
+      map.current.on('click', (e) => {
+        const coordinates: [number, number] = [e.lngLat.lng, e.lngLat.lat];
+        const name = prompt('Enter location name:');
+        if (name) {
+          const newLocation: Location = {
+            id: uuidv4(),
+            name,
+            coordinates,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          setLocations(prev => [...prev, newLocation]);
+        }
+      });
+    };
+
+    initMap();
 
     // Cleanup on unmount
     return () => {
