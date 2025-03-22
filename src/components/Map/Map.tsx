@@ -371,6 +371,7 @@ export const Map = () => {
             locations={locations}
             onLocationSelect={handleLocationSelect}
             onLocationDelete={handleLocationDelete}
+            onClose={() => setActivePanel('none')}
           />
         )}
         {activePanel === 'directions' && (
