@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.6] - 2024-03-21
+
+### Changed
+- Added hover state to action buttons for better interactive feedback
+- Subtle lift effect (translateY) on hover for depth
+- Blue highlight for icon on hover to match active state
+- Improved overall user interface responsiveness
+
 ## [0.2.5] - 2024-03-21
 
 ### Changed

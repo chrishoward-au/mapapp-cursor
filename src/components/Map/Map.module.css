@@ -47,6 +47,16 @@
   outline: none; /* Remove focus border */
 }
 
+.actionButton:hover {
+  background-color: #f0f0f0;
+  color: #333;
+  transform: translateY(-1px);
+}
+
+.actionButton:hover svg {
+  stroke: #4264fb;
+}
+
 .actionButton:focus {
   outline: none; /* Remove focus border in all browsers */
   box-shadow: none; /* Remove focus shadow in some browsers */
