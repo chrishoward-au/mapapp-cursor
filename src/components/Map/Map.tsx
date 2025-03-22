@@ -4,7 +4,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import styles from './Map.module.css';
 import { LocationMarker } from './LocationMarker';
 import { LocationList } from './LocationList';
-import { DirectionsPanel } from './Directions/DirectionsPanel';
+import { DirectionsPanel, DirectionType } from './Directions/DirectionsPanel';
 import { Location, UserPreferences } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import { storageService } from '../../services/storage';
@@ -24,6 +24,13 @@ const ROUTE_LAYER_ID = 'route-line';
 const DEFAULT_LOCATION: [number, number] = [144.9631, -37.8136]; // Melbourne, Australia [lng, lat]
 const DEFAULT_ZOOM = 12;
 
+// Map different route colors based on direction type
+const ROUTE_COLORS = {
+  walking: '#4264fb', // blue
+  cycling: '#10b981', // green
+  driving: '#f59e0b'  // amber
+};
+
 export const Map = () => {
   const { theme } = useTheme();
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -35,6 +42,7 @@ export const Map = () => {
   const [mapStyle, setMapStyle] = useState<UserPreferences['defaultMapLayer']>('map');
   const [markersKey, setMarkersKey] = useState(0); // Add a key to force marker re-creation
   const [isLoading, setIsLoading] = useState(true);
+  const [currentRouteType, setCurrentRouteType] = useState<DirectionType>('walking');
   
   // Load locations from storage on component mount
   useEffect(() => {
@@ -238,7 +246,7 @@ export const Map = () => {
           'line-cap': 'round'
         },
         paint: {
-          'line-color': '#4264fb',
+          'line-color': ROUTE_COLORS[currentRouteType],
           'line-width': 4,
           'line-opacity': 0.8
         }
@@ -270,13 +278,21 @@ export const Map = () => {
     setLocations(prev => prev.filter(loc => loc.id !== locationId));
   };
 
-  const handleRouteSelect = async (start: Location, end: Location) => {
+  const handleRouteSelect = async (start: Location, end: Location, directionType: DirectionType = 'walking') => {
     if (!map.current) return;
 
     try {
-      // Get route from Mapbox Directions API
+      // Store the current route type for use in styling
+      setCurrentRouteType(directionType);
+
+      // Update route line color based on the direction type
+      if (map.current.getLayer(ROUTE_LAYER_ID)) {
+        map.current.setPaintProperty(ROUTE_LAYER_ID, 'line-color', ROUTE_COLORS[directionType]);
+      }
+
+      // Get route from Mapbox Directions API - using the selected profile (walking, cycling, driving)
       const query = await fetch(
-        `https://api.mapbox.com/directions/v5/mapbox/driving/${start.coordinates[0]},${start.coordinates[1]};${end.coordinates[0]},${end.coordinates[1]}?geometries=geojson&overview=full&steps=true&access_token=${mapboxgl.accessToken}`
+        `https://api.mapbox.com/directions/v5/mapbox/${directionType}/${start.coordinates[0]},${start.coordinates[1]};${end.coordinates[0]},${end.coordinates[1]}?geometries=geojson&overview=full&steps=true&access_token=${mapboxgl.accessToken}`
       );
       const json = await query.json();
 

@@ -1,214 +1,249 @@
+/* Direction Panel */
 .directionsPanel {
-  background: white;
-  border-radius: 4px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  padding: 15px;
+  background-color: white;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 0;
   width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 :global(.dark) .directionsPanel {
-  background: #1f2937;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  background-color: #1a1a1a;
+  color: #f1f1f1;
 }
 
 .title {
-  margin: 0 0 15px;
-  font-size: 16px;
-  font-weight: 500;
+  margin: 0 0 16px 0;
+  font-size: 1.4rem;
+  font-weight: 600;
   color: #333;
 }
 
 :global(.dark) .title {
-  color: #f3f4f6;
+  color: #f1f1f1;
 }
 
+/* Direction Type Toggle */
+.directionTypeToggle {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+:global(.dark) .directionTypeToggle {
+  border-bottom-color: #333;
+}
+
+.toggleTitle {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #666;
+}
+
+:global(.dark) .toggleTitle {
+  color: #aaa;
+}
+
+.toggleButtons {
+  display: flex;
+  gap: 8px;
+}
+
+.toggleButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #555;
+}
+
+:global(.dark) .toggleButton {
+  background-color: #2a2a2a;
+  border-color: #444;
+  color: #ccc;
+}
+
+.toggleButton:hover {
+  background-color: #e9e9e9;
+}
+
+:global(.dark) .toggleButton:hover {
+  background-color: #333;
+}
+
+.toggleButton.active {
+  background-color: #4264fb;
+  color: white;
+  border-color: #3254eb;
+}
+
+:global(.dark) .toggleButton.active {
+  background-color: #3254eb;
+  border-color: #4264fb;
+}
+
+.directionTypeText {
+  font-weight: 500;
+}
+
+/* Location Selects */
 .locationSelect {
-  margin-bottom: 15px;
+  margin-bottom: 16px;
 }
 
 .locationSelect label {
   display: block;
-  margin-bottom: 5px;
-  font-size: 14px;
-  color: #666;
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: #555;
 }
 
 :global(.dark) .locationSelect label {
-  color: #9ca3af;
+  color: #ccc;
 }
 
 .locationSelect select {
   width: 100%;
-  padding: 8px;
-  border: 1px solid #ddd;
+  padding: 8px 12px;
   border-radius: 4px;
-  font-size: 14px;
-  color: #333;
-  background: white;
+  border: 1px solid #ddd;
+  background-color: #f9f9f9;
+  font-size: 0.9rem;
 }
 
 :global(.dark) .locationSelect select {
-  border-color: #4b5563;
-  color: #f3f4f6;
-  background: #374151;
+  background-color: #2a2a2a;
+  border-color: #444;
+  color: #f1f1f1;
 }
 
-.locationSelect select:disabled {
-  background: #f5f5f5;
-  cursor: not-allowed;
-}
-
-:global(.dark) .locationSelect select:disabled {
-  background: #1f2937;
-  color: #6b7280;
-}
-
+/* Calculate Button */
 .calculateButton {
-  width: 100%;
-  padding: 10px;
-  background: #4264fb;
+  background-color: #4264fb;
   color: white;
   border: none;
   border-radius: 4px;
-  font-size: 14px;
+  padding: 10px 16px;
   font-weight: 500;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background-color 0.2s ease;
+  width: 100%;
+  margin-bottom: 16px;
 }
 
-.calculateButton:hover:not(:disabled) {
-  background: #3251d8;
+.calculateButton:hover {
+  background-color: #3254eb;
 }
 
 .calculateButton:disabled {
-  background: #ccc;
+  background-color: #cccccc;
   cursor: not-allowed;
 }
 
 :global(.dark) .calculateButton:disabled {
-  background: #4b5563;
+  background-color: #444;
 }
 
+/* Route Information */
 .routeInfo {
-  margin-top: 20px;
-  border-top: 1px solid #eee;
-  padding-top: 15px;
+  border-top: 1px solid #eaeaea;
+  padding-top: 16px;
+  margin-top: 16px;
 }
 
 :global(.dark) .routeInfo {
-  border-top-color: #4b5563;
+  border-top-color: #333;
 }
 
-.routeSummary {
-  background: #f5f8ff;
+.summary {
+  background-color: #f5f5f5;
   border-radius: 4px;
   padding: 12px;
-  margin-bottom: 15px;
-}
-
-:global(.dark) .routeSummary {
-  background: #334155;
-}
-
-.summaryItem {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 14px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
   color: #333;
+  display: flex;
+  align-items: center;
 }
 
-:global(.dark) .summaryItem {
-  color: #f3f4f6;
-}
-
-.summaryItem:not(:last-child) {
-  margin-bottom: 8px;
-}
-
-.label {
-  color: #666;
-}
-
-:global(.dark) .label {
-  color: #9ca3af;
-}
-
-.value {
-  font-weight: 500;
-}
-
-:global(.dark) .value {
-  color: #f3f4f6;
+:global(.dark) .summary {
+  background-color: #2a2a2a;
+  color: #f1f1f1;
 }
 
 .steps {
-  margin-top: 15px;
+  margin-top: 16px;
 }
 
 .steps h4 {
-  margin: 0 0 12px;
-  font-size: 14px;
-  font-weight: 500;
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: #333;
 }
 
 :global(.dark) .steps h4 {
-  color: #f3f4f6;
+  color: #f1f1f1;
 }
 
-.step {
-  padding: 10px 0;
-  border-bottom: 1px solid #eee;
+.steps ol {
+  padding-left: 24px;
+  margin: 0;
 }
 
-:global(.dark) .step {
-  border-bottom-color: #4b5563;
+.steps li {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #eaeaea;
+  font-size: 0.9rem;
+  line-height: 1.5;
 }
 
-.step:last-child {
+:global(.dark) .steps li {
+  border-bottom-color: #333;
+}
+
+.steps li:last-child {
   border-bottom: none;
 }
 
-.stepInstruction {
-  font-size: 14px;
-  color: #333;
-  margin-bottom: 4px;
-}
-
-:global(.dark) .stepInstruction {
-  color: #f3f4f6;
-}
-
-.stepDetails {
-  font-size: 12px;
+.stepDistance {
+  font-size: 0.8rem;
   color: #666;
+  margin-top: 4px;
 }
 
-:global(.dark) .stepDetails {
-  color: #9ca3af;
+:global(.dark) .stepDistance {
+  color: #aaa;
 }
 
-/* Responsive styles */
-@media (max-width: 768px) {
+/* Responsive Styles */
+@media (max-width: 600px) {
   .directionsPanel {
     padding: 12px;
   }
-
+  
   .title {
-    font-size: 15px;
-    margin-bottom: 12px;
+    font-size: 1.2rem;
   }
-
-  .locationSelect select {
-    padding: 6px;
+  
+  .locationSelect label,
+  .toggleTitle {
+    font-size: 0.85rem;
   }
-
-  .routeSummary {
-    padding: 10px;
-  }
-
-  .step {
-    padding: 8px 0;
+  
+  .calculateButton {
+    padding: 8px 12px;
   }
 } 
