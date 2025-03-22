@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2024-03-21
+
+### Added
+- User location pip showing current position on the map
+- Settings to control location pip display (non-pulsing, no heading arrow)
+- Improved user location permission handling to prevent repeated prompts
+- Comprehensive TODO list with structured development plan
+
+### Changed
+- Updated to semantic versioning with major version increase (0.3.0)
+- Resolved cross-browser compatibility issues with geolocation services
+- Enhanced map control visibility with improved CSS
+
 ## [0.2.11] - 2024-03-21
 
 ### Added
@@ -12,7 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Real-time location tracking with direction heading indicator
 - Accuracy circle displaying GPS precision
 - Location control button in the top-right corner
-- Support for continuous location updates as user moves
+- Support for continuous location updates as the user moves
+
+### Fixed
+- Fixed map style change causing satellite button to break
+- Resolved issue with markers not reappearing after style changes
 
 ## [0.2.10] - 2024-03-21
 
@@ -119,19 +136,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.11] - 2024-03-21
 
 ### Added
-- Route information display with distance and duration
-- Turn-by-turn directions with step details
-- Distance and duration for each step
-- Improved route information styling
-- Clear route info when changing locations
+- Route information display with total distance and duration
+- Detailed turn-by-turn directions with distance and time for each step
+- Improved styling for the route information panel
+- Auto-clearing of route information when locations change
 
 ## [0.0.10] - 2024-03-21
 
 ### Added
-- Implemented route plotting using Mapbox Directions API
-- Added route visualization with blue line on map
-- Auto-zoom to show entire route when selected
-- Proper route layer management with GeoJSON source
+- Route plotting using Mapbox Directions API
+- Visual route display on map
+- Automatic map camera adjustment to show entire route
+- Route distance and duration calculation
+- Fixed satellite view style changes
 
 ## [0.0.9] - 2024-03-21
 
@@ -174,45 +191,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Refined typography and color scheme
 - Added hover states and transitions for better interactivity
 
-## [0.0.4] - 2024-03-21
+## [0.0.4] - 2024-03-20
 
 ### Added
 - Directions panel with location selection
 - Tab interface for switching between locations and directions
-- Basic route selection functionality
-- Improved UI organization with side panel
+- Basic route selection functionality with start and end points
+- Improved UI organization with separated components
 
-## [0.0.3] - 2024-03-21
-
-### Fixed
-- Map container warning by properly separating UI elements
-- Location persistence between page refreshes
-- Type safety improvements for map initialization
-
-### Changed
-- Improved UI layout with proper layering
-- Enhanced component structure for better maintainability
-
-## [0.0.2] - 2024-03-21
+## [0.0.3] - 2024-03-20
 
 ### Added
-- Local storage integration for location persistence
-- Automatic loading of saved locations on app start
-- Automatic saving of locations when changes occur
+- Location markers that can be added to the map
+- Location list panel showing all saved locations
+- Delete functionality for removing saved locations
+- Flyto capability to zoom to selected locations
+- Local storage persistence for saved locations
 
-## [0.0.1] - 2024-03-21
+## [0.0.2] - 2024-03-19
 
 ### Added
-- Basic map display with Mapbox integration
-- Layer toggle between map and satellite views
-- Location management features:
-  - Add locations by clicking on map
-  - Display locations as markers
-  - List view of saved locations
-  - Delete locations
-  - Center map on selected location
-- Initial project structure and configuration
+- Basic map functionality using Mapbox GL
+- Navigation controls for zoom and rotation
+- Map style switcher (street vs. satellite)
 
-### Changed
-- Updated project structure to follow clean architecture principles
-- Implemented type-safe interfaces for locations and preferences 
+## [0.0.1] - 2024-03-19
+
+### Added
+- Initial project setup with Vite and TypeScript
+- Basic application structure
+- Environment configuration 
