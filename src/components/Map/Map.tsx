@@ -333,8 +333,8 @@ export const Map = () => {
           duration: 1000
         });
         
-        // Close the panel only after a successful route calculation
-        setActivePanel('none');
+        // No longer auto-close the panel after route calculation
+        // setActivePanel('none');
 
         return {
           distance: route.distance,
@@ -383,6 +383,7 @@ export const Map = () => {
             onStartLocationChange={setRouteStartLocation}
             onEndLocationChange={setRouteEndLocation}
             onDirectionTypeChange={setRouteDirectionType}
+            onClose={() => setActivePanel('none')}
           />
         )}
       </div>

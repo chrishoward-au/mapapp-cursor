@@ -15,14 +15,48 @@
   color: #f1f1f1;
 }
 
+.panelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
 .title {
-  margin: 0 0 16px 0;
+  margin: 0;
   font-size: 1.4rem;
   font-weight: 600;
   color: #333;
 }
 
 :global(.dark) .title {
+  color: #f1f1f1;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  padding: 6px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+  transition: all 0.2s ease;
+}
+
+.closeButton:hover {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+:global(.dark) .closeButton {
+  color: #aaa;
+}
+
+:global(.dark) .closeButton:hover {
+  background-color: #333;
   color: #f1f1f1;
 }
 

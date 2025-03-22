@@ -26,6 +26,7 @@ interface DirectionsPanelProps {
   onStartLocationChange: (location: Location | null) => void;
   onEndLocationChange: (location: Location | null) => void;
   onDirectionTypeChange: (type: DirectionType) => void;
+  onClose: () => void; // New prop for closing the panel
 }
 
 export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
@@ -36,7 +37,8 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
   directionType,
   onStartLocationChange,
   onEndLocationChange,
-  onDirectionTypeChange
+  onDirectionTypeChange,
+  onClose
 }) => {
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
   const [prevStartId, setPrevStartId] = useState<string | null>(null);
@@ -129,7 +131,15 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
 
   return (
     <div className={styles.directionsPanel}>
-      <h3 className={styles.title}>Directions</h3>
+      <div className={styles.panelHeader}>
+        <h3 className={styles.title}>Directions</h3>
+        <button className={styles.closeButton} onClick={onClose} aria-label="Close directions panel">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
       
       <div className={styles.directionTypeToggle}>
         <div className={styles.toggleTitle}>Transport mode:</div>

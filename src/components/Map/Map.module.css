@@ -102,36 +102,33 @@
 
 .panel {
   background: white;
-  border-radius: 8px 8px 0 0;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2); /* Stronger shadow */
-  max-height: 50vh;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  height: 100%;
   overflow-y: auto;
-  position: relative; /* Changed from fixed to relative */
-  bottom: 0; /* Position above the action bar */
+  position: absolute;
+  top: 0;
   left: 0;
-  width: 100%;
-  transform: translateY(0);
+  width: 300px;
+  transform: translateX(0);
   opacity: 1;
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
               opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 10; /* Ensure it's above other elements */
-  padding: 16px; /* Add padding for content */
-  border-top: 3px solid #4264fb; /* Blue highlight at top */
-  display: flex;
-  justify-content: center;
+  z-index: 10;
+  padding: 16px;
+  border-right: 3px solid #4264fb;
 }
 
 :global(.dark) .panel {
   background: #1f2937;
-  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.4);
-  border-top: 3px solid #3b82f6;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+  border-right: 3px solid #3b82f6;
   color: #f3f4f6;
 }
 
 .panel.hidden {
-  display: none;
   opacity: 0;
-  transform: translateY(100%);
+  transform: translateX(-100%);
+  pointer-events: none;
 }
 
 /* Responsive styles */
