@@ -15,14 +15,8 @@ import { useTheme } from '../../contexts/ThemeContext';
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 const MAP_STYLES = {
-  map: {
-    light: 'mapbox://styles/mapbox/streets-v12',
-    dark: 'mapbox://styles/mapbox/dark-v11',
-  },
-  satellite: {
-    light: 'mapbox://styles/mapbox/satellite-streets-v12',
-    dark: 'mapbox://styles/mapbox/satellite-streets-v12', // Same for dark mode since satellite is already dark
-  }
+  map: 'mapbox://styles/mapbox/streets-v12',
+  satellite: 'mapbox://styles/mapbox/satellite-streets-v12'
 };
 
 const ROUTE_SOURCE_ID = 'route';
@@ -99,10 +93,10 @@ export const Map = () => {
         console.info('Using default location (Melbourne):', DEFAULT_LOCATION);
       }
 
-      // Initialize map with the correct theme-based style
+      // Initialize map with the original map style (not theme-dependent)
       map.current = new mapboxgl.Map({
         container: containerElement,
-        style: MAP_STYLES[mapStyle][theme],
+        style: MAP_STYLES[mapStyle],
         center: initialCenter,
         zoom: DEFAULT_ZOOM
       });
@@ -156,16 +150,14 @@ export const Map = () => {
     };
   }, []); // Only run once on mount
 
-  // Handle map style changes or theme changes
+  // Handle map style changes
   useEffect(() => {
     if (!map.current || !isMapInitialized) return;
 
-    const currentThemeMapStyle = MAP_STYLES[mapStyle][theme];
-    
     // Don't run on initial render when mapStyle is just initialized
     try {
       const currentStyle = map.current.getStyle();
-      if (currentStyle && currentStyle.name === currentThemeMapStyle) return;
+      if (currentStyle && currentStyle.name === MAP_STYLES[mapStyle]) return;
     } catch (e) {
       // Style might not be available yet
       return;
@@ -175,7 +167,7 @@ export const Map = () => {
     const currentZoom = map.current.getZoom();
 
     // Simple approach - just set the style and restore view after a brief delay
-    map.current.setStyle(currentThemeMapStyle);
+    map.current.setStyle(MAP_STYLES[mapStyle]);
     
     // Let the styledata event in LocationMarker handle marker re-creation
     setTimeout(() => {
@@ -186,7 +178,7 @@ export const Map = () => {
       }
     }, 150);
     
-  }, [mapStyle, isMapInitialized, theme]); // Also listen for theme changes
+  }, [mapStyle, isMapInitialized]); // Don't react to theme changes for map style
 
   // Save locations whenever they change
   useEffect(() => {

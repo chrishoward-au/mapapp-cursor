@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3] - 2025-03-22
+
+### Added
+- Dark mode support with automatic theme detection based on system preferences
+- Dark mode toggle in the action bar with sun/moon icons
+- Dark mode styling for all UI components while preserving original design
+- Persistent theme preference stored in localStorage
+
+### Changed
+- Dark mode only affects UI components, not the map itself
+
 ## [0.3.2] - 2025-03-22
 
 ### Added
