@@ -28,6 +28,7 @@ export const Map = () => {
   const { theme } = useTheme();
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+  const geolocateControl = useRef<mapboxgl.GeolocateControl | null>(null);
   const [isMapInitialized, setIsMapInitialized] = useState(false);
   const [activePanel, setActivePanel] = useState<'none' | 'locations' | 'directions'>('none');
   const [locations, setLocations] = useState<Location[]>([]);
@@ -104,24 +105,32 @@ export const Map = () => {
       // Add navigation controls
       map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
       
-      // Add user location control (the pip)
-      map.current.addControl(
-        new mapboxgl.GeolocateControl({
-          positionOptions: {
-            enableHighAccuracy: true
-          },
-          trackUserLocation: true,
-          showUserHeading: true,
-          showAccuracyCircle: true
-        }),
-        'top-right'
-      );
+      // Create geolocate control with more options and store it in ref
+      geolocateControl.current = new mapboxgl.GeolocateControl({
+        positionOptions: {
+          enableHighAccuracy: true,
+          timeout: 6000
+        },
+        trackUserLocation: true,
+        showUserHeading: true,
+        showAccuracyCircle: true
+      });
+      
+      // Add the geolocate control to the map
+      map.current.addControl(geolocateControl.current, 'top-right');
 
       // Wait for map to fully load before setting initialized state
       map.current.on('load', () => {
         addRouteLayer();
         setIsMapInitialized(true);
         setMarkersKey(prev => prev + 1);
+        
+        // Trigger the geolocate control automatically after map loads
+        setTimeout(() => {
+          if (geolocateControl.current) {
+            geolocateControl.current.trigger();
+          }
+        }, 1000);
       });
 
       // Add click handler for adding locations
