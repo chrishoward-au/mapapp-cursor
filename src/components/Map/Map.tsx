@@ -287,9 +287,6 @@ export const Map = () => {
   const handleRouteSelect = async (start: Location, end: Location, directionType: DirectionType = 'walking') => {
     if (!map.current) return;
 
-    // Detect if this is a new route calculation or a route update
-    const isNewRoute = !(routeStartLocation && routeEndLocation);
-
     try {
       // Store the current route type for use in styling
       setCurrentRouteType(directionType);
@@ -337,11 +334,8 @@ export const Map = () => {
           duration: 1000
         });
         
-        // Only auto-close the directions panel after the initial route calculation
-        // Don't close when updating an existing route
-        if (isNewRoute) {
-          setActivePanel('none');
-        }
+        // Always close the panel when a route is calculated - simple approach
+        setActivePanel('none');
 
         return {
           distance: route.distance,
