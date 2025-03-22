@@ -267,7 +267,6 @@ export const Map = () => {
   };
 
   const togglePanel = (panel: 'locations' | 'directions') => {
-    // Don't auto-close when toggling - only set the active panel
     setActivePanel(current => current === panel ? 'none' : panel);
   };
 
@@ -334,7 +333,7 @@ export const Map = () => {
           duration: 1000
         });
         
-        // Always close the panel when a route is calculated - simple approach
+        // Close the panel only after a successful route calculation
         setActivePanel('none');
 
         return {

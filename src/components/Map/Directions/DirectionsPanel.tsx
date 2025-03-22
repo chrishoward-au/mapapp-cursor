@@ -39,22 +39,27 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
   onDirectionTypeChange
 }) => {
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
+  const [prevStartId, setPrevStartId] = useState<string | null>(null);
+  const [prevEndId, setPrevEndId] = useState<string | null>(null);
+  const [prevDirType, setPrevDirType] = useState<DirectionType | null>(null);
 
-  // Auto-calculate route when both locations are selected or when either changes
+  // Only calculate route when values actually change, not just on panel reopen
   useEffect(() => {
-    if (startLocation && endLocation) {
+    const startId = startLocation?.id || null;
+    const endId = endLocation?.id || null;
+    
+    // Only trigger calculation if something actually changed
+    if (startLocation && endLocation && 
+        (startId !== prevStartId || endId !== prevEndId || directionType !== prevDirType)) {
       handleCalculateRoute();
-    } else {
+      // Store current values to compare against for future changes
+      setPrevStartId(startId);
+      setPrevEndId(endId);
+      setPrevDirType(directionType);
+    } else if (!startLocation || !endLocation) {
       setRouteInfo(null);
     }
-  }, [startLocation, endLocation]);
-
-  // Automatically recalculate route when direction type changes if start and end are selected
-  useEffect(() => {
-    if (startLocation && endLocation) {
-      handleCalculateRoute();
-    }
-  }, [directionType]);
+  }, [startLocation, endLocation, directionType]);
 
   const handleCalculateRoute = async () => {
     if (!startLocation || !endLocation) return;
