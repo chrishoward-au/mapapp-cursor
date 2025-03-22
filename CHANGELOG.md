@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.7] - 2025-03-22
+
+### Changed
+- Removed "Calculate Route" button from DirectionsPanel
+- Added automatic route calculation when both start and end locations are selected
+- Implemented auto-recalculation when either location changes
+- Improved user experience with instant route updates
+
 ## [0.3.6] - 2025-03-22
 
 ### Added

@@ -27,9 +27,13 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({ locations, onR
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
   const [directionType, setDirectionType] = useState<DirectionType>('walking');
 
-  // Clear route info when locations change
+  // Auto-calculate route when both locations are selected or when either changes
   useEffect(() => {
-    setRouteInfo(null);
+    if (startLocation && endLocation) {
+      handleCalculateRoute();
+    } else {
+      setRouteInfo(null);
+    }
   }, [startLocation, endLocation]);
 
   // Automatically recalculate route when direction type changes if start and end are selected
@@ -175,14 +179,6 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({ locations, onR
           </select>
         </label>
       </div>
-      
-      <button 
-        className={styles.calculateButton}
-        onClick={handleCalculateRoute}
-        disabled={!startLocation || !endLocation}
-      >
-        Calculate Route
-      </button>
       
       {routeInfo && (
         <div className={styles.routeInfo}>
