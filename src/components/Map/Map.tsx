@@ -44,6 +44,11 @@ export const Map = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [currentRouteType, setCurrentRouteType] = useState<DirectionType>('walking');
   
+  // Store route state at Map level to preserve it when panel is closed
+  const [routeStartLocation, setRouteStartLocation] = useState<Location | null>(null);
+  const [routeEndLocation, setRouteEndLocation] = useState<Location | null>(null);
+  const [routeDirectionType, setRouteDirectionType] = useState<DirectionType>('walking');
+  
   // Load locations from storage on component mount
   useEffect(() => {
     const loadLocations = async () => {
@@ -284,6 +289,11 @@ export const Map = () => {
     try {
       // Store the current route type for use in styling
       setCurrentRouteType(directionType);
+      
+      // Store the route state
+      setRouteStartLocation(start);
+      setRouteEndLocation(end);
+      setRouteDirectionType(directionType);
 
       // Update route line color based on the direction type
       if (map.current.getLayer(ROUTE_LAYER_ID)) {
@@ -322,6 +332,9 @@ export const Map = () => {
           padding: 50,
           duration: 1000
         });
+        
+        // Auto-close the directions panel after a successful route calculation
+        setActivePanel('none');
 
         return {
           distance: route.distance,
@@ -364,6 +377,12 @@ export const Map = () => {
           <DirectionsPanel
             locations={locations}
             onRouteSelect={handleRouteSelect}
+            startLocation={routeStartLocation}
+            endLocation={routeEndLocation}
+            directionType={routeDirectionType}
+            onStartLocationChange={setRouteStartLocation}
+            onEndLocationChange={setRouteEndLocation}
+            onDirectionTypeChange={setRouteDirectionType}
           />
         )}
       </div>

@@ -133,33 +133,6 @@
   color: #f1f1f1;
 }
 
-/* Calculate Button */
-.calculateButton {
-  background-color: #4264fb;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 10px 16px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-  width: 100%;
-  margin-bottom: 16px;
-}
-
-.calculateButton:hover {
-  background-color: #3254eb;
-}
-
-.calculateButton:disabled {
-  background-color: #cccccc;
-  cursor: not-allowed;
-}
-
-:global(.dark) .calculateButton:disabled {
-  background-color: #444;
-}
-
 /* Route Information */
 .routeInfo {
   border-top: 1px solid #eaeaea;
@@ -247,9 +220,5 @@
   .locationSelect label,
   .toggleTitle {
     font-size: 0.85rem;
-  }
-  
-  .calculateButton {
-    padding: 8px 12px;
   }
 } 

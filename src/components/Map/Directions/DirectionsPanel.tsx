@@ -19,13 +19,26 @@ interface RouteInfo {
 interface DirectionsPanelProps {
   locations: Location[];
   onRouteSelect: (start: Location, end: Location, directionType: DirectionType) => Promise<RouteInfo | undefined>;
+  // New props for controlling route state from parent
+  startLocation: Location | null;
+  endLocation: Location | null;
+  directionType: DirectionType;
+  onStartLocationChange: (location: Location | null) => void;
+  onEndLocationChange: (location: Location | null) => void;
+  onDirectionTypeChange: (type: DirectionType) => void;
 }
 
-export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({ locations, onRouteSelect }) => {
-  const [startLocation, setStartLocation] = useState<Location | null>(null);
-  const [endLocation, setEndLocation] = useState<Location | null>(null);
+export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
+  locations,
+  onRouteSelect,
+  startLocation,
+  endLocation,
+  directionType,
+  onStartLocationChange,
+  onEndLocationChange,
+  onDirectionTypeChange
+}) => {
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
-  const [directionType, setDirectionType] = useState<DirectionType>('walking');
 
   // Auto-calculate route when both locations are selected or when either changes
   useEffect(() => {
@@ -118,21 +131,21 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({ locations, onR
         <div className={styles.toggleButtons}>
           <button 
             className={`${styles.toggleButton} ${directionType === 'walking' ? styles.active : ''}`}
-            onClick={() => setDirectionType('walking')}
+            onClick={() => onDirectionTypeChange('walking')}
             title="Walking"
           >
             {getDirectionTypeIcon('walking')}
           </button>
           <button 
             className={`${styles.toggleButton} ${directionType === 'cycling' ? styles.active : ''}`}
-            onClick={() => setDirectionType('cycling')}
+            onClick={() => onDirectionTypeChange('cycling')}
             title="Cycling"
           >
             {getDirectionTypeIcon('cycling')}
           </button>
           <button 
             className={`${styles.toggleButton} ${directionType === 'driving' ? styles.active : ''}`}
-            onClick={() => setDirectionType('driving')}
+            onClick={() => onDirectionTypeChange('driving')}
             title="Driving"
           >
             {getDirectionTypeIcon('driving')}
@@ -147,7 +160,7 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({ locations, onR
             value={startLocation?.id || ""} 
             onChange={(e) => {
               const selected = locations.find(loc => loc.id === e.target.value);
-              setStartLocation(selected || null);
+              onStartLocationChange(selected || null);
             }}
           >
             <option value="">Select start location</option>
@@ -167,7 +180,7 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({ locations, onR
             value={endLocation?.id || ""} 
             onChange={(e) => {
               const selected = locations.find(loc => loc.id === e.target.value);
-              setEndLocation(selected || null);
+              onEndLocationChange(selected || null);
             }}
           >
             <option value="">Select end location</option>
