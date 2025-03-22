@@ -20,7 +20,7 @@ const MAP_STYLES = {
 const ROUTE_SOURCE_ID = 'route';
 const ROUTE_LAYER_ID = 'route-line';
 const DEFAULT_LOCATION: [number, number] = [144.9631, -37.8136]; // Melbourne, Australia [lng, lat]
-const DEFAULT_ZOOM = 10;
+const DEFAULT_ZOOM = 12;
 
 export const Map = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -100,6 +100,19 @@ export const Map = () => {
 
       // Add navigation controls
       map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+      
+      // Add user location control (the pip)
+      map.current.addControl(
+        new mapboxgl.GeolocateControl({
+          positionOptions: {
+            enableHighAccuracy: true
+          },
+          trackUserLocation: true,
+          showUserHeading: true,
+          showAccuracyCircle: true
+        }),
+        'top-right'
+      );
 
       // Wait for map to fully load before setting initialized state
       map.current.on('load', () => {
