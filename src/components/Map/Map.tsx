@@ -27,25 +27,16 @@ export const Map = () => {
   const [activePanel, setActivePanel] = useState<'none' | 'locations' | 'directions'>('none');
   const [locations, setLocations] = useState<Location[]>(() => {
     // Initialize locations from storage on component mount
-    const storedLocations = storageService.getLocations();
-    console.log('INIT: Loading locations from storage:', storedLocations);
-    return storedLocations;
+    return storageService.getLocations();
   });
   const [mapStyle, setMapStyle] = useState<UserPreferences['defaultMapLayer']>('map');
   const [markersKey, setMarkersKey] = useState(0); // Add a key to force marker re-creation
 
-  console.log('RENDER: Map component rendering, isMapInitialized:', isMapInitialized, 'markersKey:', markersKey, 'locations:', locations);
-
   // Initialize map
   useEffect(() => {
-    console.log('EFFECT: Map initialization starting');
-    if (!mapContainer.current) {
-      console.log('ERROR: Map container not found');
-      return;
-    }
+    if (!mapContainer.current) return;
 
     // Initialize map
-    console.log('MAP: Creating new map instance with style:', MAP_STYLES[mapStyle]);
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
       style: MAP_STYLES[mapStyle],
@@ -58,15 +49,9 @@ export const Map = () => {
 
     // Wait for map to fully load before setting initialized state
     map.current.on('load', () => {
-      console.log('MAP LOAD: Map fully loaded');
       addRouteLayer();
-      console.log('MAP LOAD: Setting isMapInitialized to true');
       setIsMapInitialized(true);
-      console.log('MAP LOAD: Incrementing markersKey from', markersKey);
-      setMarkersKey(prev => {
-        console.log('MAP LOAD: New markersKey will be', prev + 1);
-        return prev + 1;
-      });
+      setMarkersKey(prev => prev + 1);
     });
 
     // Add click handler for adding locations
@@ -74,7 +59,6 @@ export const Map = () => {
       const coordinates: [number, number] = [e.lngLat.lng, e.lngLat.lat];
       const name = prompt('Enter location name:');
       if (name) {
-        console.log('MAP CLICK: Adding new location:', name, coordinates);
         const newLocation: Location = {
           id: uuidv4(),
           name,
@@ -88,7 +72,6 @@ export const Map = () => {
 
     // Cleanup on unmount
     return () => {
-      console.log('CLEANUP: Removing map');
       map.current?.remove();
       setIsMapInitialized(false);
     };
@@ -96,39 +79,19 @@ export const Map = () => {
 
   // Handle map style changes separately
   useEffect(() => {
-    console.log('EFFECT: Style change effect running, mapStyle:', mapStyle, 'isMapInitialized:', isMapInitialized);
-    
-    if (!map.current) {
-      console.log('STYLE: map.current is null, skipping style change');
-      return;
-    }
-    
-    // Skip initial render and style changes when map is not initialized
-    if (!isMapInitialized) {
-      console.log('STYLE: Map not initialized yet, skipping style change');
-      return;
-    }
+    if (!map.current || !isMapInitialized) return;
 
     // Don't run on initial render when mapStyle is just initialized
     try {
       const currentStyle = map.current.getStyle();
-      console.log('STYLE: Current style:', currentStyle?.name, 'New style:', MAP_STYLES[mapStyle]);
-      
-      if (currentStyle && currentStyle.name === MAP_STYLES[mapStyle]) {
-        console.log('STYLE: Style unchanged, skipping update');
-        return;
-      }
+      if (currentStyle && currentStyle.name === MAP_STYLES[mapStyle]) return;
     } catch (e) {
       // Style might not be available yet
-      console.log('STYLE ERROR: Style not available yet', e);
       return;
     }
-
-    console.log('STYLE: Changing style to:', mapStyle);
     
     const currentCenter = map.current.getCenter();
     const currentZoom = map.current.getZoom();
-    console.log('STYLE: Saving view state, center:', currentCenter, 'zoom:', currentZoom);
 
     // Simple approach - just set the style and restore view after a brief delay
     map.current.setStyle(MAP_STYLES[mapStyle]);
@@ -136,7 +99,6 @@ export const Map = () => {
     // Let the styledata event in LocationMarker handle marker re-creation
     setTimeout(() => {
       if (map.current) {
-        console.log('STYLE: Restoring view state after style change');
         map.current.setCenter(currentCenter);
         map.current.setZoom(currentZoom);
         addRouteLayer();
@@ -147,23 +109,16 @@ export const Map = () => {
 
   // Save locations whenever they change
   useEffect(() => {
-    console.log('EFFECT: Locations changed, new locations:', locations);
     if (locations.length > 0 || storageService.getLocations().length > 0) {
-      console.log('STORAGE: Saving locations to storage');
       storageService.saveLocations(locations);
     }
   }, [locations]);
 
   const addRouteLayer = () => {
-    console.log('ROUTE: Adding/updating route layer');
-    if (!map.current) {
-      console.log('ROUTE ERROR: map.current is null');
-      return;
-    }
+    if (!map.current) return;
 
     // Check if source already exists and remove it
     if (map.current.getSource(ROUTE_SOURCE_ID)) {
-      console.log('ROUTE: Removing existing route source/layer');
       if (map.current.getLayer(ROUTE_LAYER_ID)) {
         map.current.removeLayer(ROUTE_LAYER_ID);
       }
@@ -171,7 +126,6 @@ export const Map = () => {
     }
 
     // Add route source and layer
-    console.log('ROUTE: Adding new route source/layer');
     try {
       map.current.addSource(ROUTE_SOURCE_ID, {
         type: 'geojson',
@@ -199,18 +153,13 @@ export const Map = () => {
           'line-opacity': 0.8
         }
       });
-      console.log('ROUTE: Route layer added successfully');
     } catch (e) {
-      console.error('ROUTE ERROR: Failed to add route layer', e);
+      console.error('Failed to add route layer:', e);
     }
   };
 
   const handleLayerChange = (layer: UserPreferences['defaultMapLayer']) => {
-    console.log('ACTION: Layer change requested to', layer);
-    if (!map.current) {
-      console.log('ACTION ERROR: map.current is null');
-      return;
-    }
+    if (!map.current) return;
     setMapStyle(layer);
   };
 
@@ -279,14 +228,6 @@ export const Map = () => {
     }
   };
 
-  // Debug logging for panel state
-  useEffect(() => {
-    console.log('Active panel:', activePanel);
-    if (activePanel === 'locations') {
-      console.log('Locations panel showing with', locations.length, 'locations');
-    }
-  }, [activePanel, locations]);
-
   return (
     <div className={styles.wrapper}>
       <div className={styles.mapWrapper}>
@@ -305,7 +246,6 @@ export const Map = () => {
         )}
       </div>
 
-      {/* Panel is now a direct child of wrapper */}
       <div className={`${styles.panel} ${activePanel === 'none' ? styles.hidden : ''}`}>
         {activePanel === 'locations' && (
           <LocationList

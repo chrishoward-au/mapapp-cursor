@@ -1,6 +1,11 @@
-import { useState } from 'react';
-import { Location } from '../../../types';
+import { useState, useEffect } from 'react';
 import styles from './DirectionsPanel.module.css';
+import { Location } from '../../../types';
+
+interface DirectionsPanelProps {
+  locations: Location[];
+  onRouteSelect: (start: Location, end: Location) => Promise<RouteInfo | undefined>;
+}
 
 interface RouteInfo {
   distance: number;
@@ -14,94 +19,98 @@ interface RouteInfo {
   }[];
 }
 
-interface DirectionsPanelProps {
-  locations: Location[];
-  onRouteSelect: (start: Location, end: Location) => Promise<RouteInfo | undefined>;
-}
-
 export const DirectionsPanel = ({ locations, onRouteSelect }: DirectionsPanelProps) => {
-  const [startLocation, setStartLocation] = useState<Location | null>(null);
-  const [endLocation, setEndLocation] = useState<Location | null>(null);
+  const [startLocationId, setStartLocationId] = useState<string>('');
+  const [endLocationId, setEndLocationId] = useState<string>('');
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
 
+  // Clear route info when location selections change
+  useEffect(() => {
+    setRouteInfo(null);
+  }, [startLocationId, endLocationId]);
+
   const handleCalculateRoute = async () => {
-    if (startLocation && endLocation) {
-      const info = await onRouteSelect(startLocation, endLocation);
-      if (info) {
-        setRouteInfo(info);
-      }
+    if (!startLocationId || !endLocationId) {
+      alert('Please select start and end locations');
+      return;
+    }
+
+    const startLocation = locations.find(loc => loc.id === startLocationId);
+    const endLocation = locations.find(loc => loc.id === endLocationId);
+
+    if (!startLocation || !endLocation) {
+      alert('Invalid locations selected');
+      return;
+    }
+
+    const info = await onRouteSelect(startLocation, endLocation);
+    if (info) {
+      setRouteInfo(info);
     }
   };
 
-  const formatDuration = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    
-    if (hours > 0) {
-      return `${hours} hr ${minutes} min`;
-    }
-    return `${minutes} min`;
-  };
-
+  // Format distance in miles
   const formatDistance = (meters: number) => {
     const miles = meters / 1609.34;
-    return `${miles.toFixed(1)} mi`;
+    return miles < 0.1 
+      ? `${Math.round(miles * 5280)} ft` 
+      : `${miles.toFixed(1)} mi`;
+  };
+
+  // Format duration in minutes/hours
+  const formatDuration = (seconds: number) => {
+    const minutes = Math.round(seconds / 60);
+    if (minutes < 60) {
+      return `${minutes} min`;
+    } else {
+      const hours = Math.floor(minutes / 60);
+      const remainingMinutes = minutes % 60;
+      return `${hours} hr ${remainingMinutes} min`;
+    }
   };
 
   return (
-    <div className={styles.directionsPanel}>
-      <h3 className={styles.title}>Directions</h3>
+    <div className={styles.container}>
+      <h2>Get Directions</h2>
       
-      <div className={styles.locationSelect}>
-        <label>
-          Start Location:
-          <select
-            value={startLocation?.id || ''}
-            onChange={(e) => {
-              const location = locations.find(loc => loc.id === e.target.value);
-              setStartLocation(location || null);
-              setRouteInfo(null);
-            }}
-          >
-            <option value="">Select start point</option>
-            {locations.map(location => (
-              <option key={location.id} value={location.id}>
-                {location.name}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div className={styles.inputGroup}>
+        <label htmlFor="start-location">Start</label>
+        <select 
+          id="start-location"
+          value={startLocationId}
+          onChange={(e) => setStartLocationId(e.target.value)}
+          className={styles.locationSelect}
+        >
+          <option value="">Select starting point</option>
+          {locations.map(location => (
+            <option key={location.id} value={location.id}>
+              {location.name}
+            </option>
+          ))}
+        </select>
       </div>
-
-      <div className={styles.locationSelect}>
-        <label>
-          End Location:
-          <select
-            value={endLocation?.id || ''}
-            onChange={(e) => {
-              const location = locations.find(loc => loc.id === e.target.value);
-              setEndLocation(location || null);
-              setRouteInfo(null);
-            }}
-          >
-            <option value="">Select end point</option>
-            {locations.map(location => (
-              <option 
-                key={location.id} 
-                value={location.id}
-                disabled={location.id === startLocation?.id}
-              >
-                {location.name}
-              </option>
-            ))}
-          </select>
-        </label>
+      
+      <div className={styles.inputGroup}>
+        <label htmlFor="end-location">End</label>
+        <select 
+          id="end-location"
+          value={endLocationId}
+          onChange={(e) => setEndLocationId(e.target.value)}
+          className={styles.locationSelect}
+        >
+          <option value="">Select destination</option>
+          {locations.map(location => (
+            <option key={location.id} value={location.id}>
+              {location.name}
+            </option>
+          ))}
+        </select>
       </div>
-
-      <button
+      
+      <button 
         className={styles.calculateButton}
         onClick={handleCalculateRoute}
-        disabled={!startLocation || !endLocation}
+        disabled={!startLocationId || !endLocationId}
       >
         Calculate Route
       </button>
@@ -119,19 +128,20 @@ export const DirectionsPanel = ({ locations, onRouteSelect }: DirectionsPanelPro
             </div>
           </div>
 
-          <div className={styles.steps}>
-            <h4>Turn-by-turn directions:</h4>
+          <h3>Directions</h3>
+          <ol className={styles.directions}>
             {routeInfo.steps.map((step, index) => (
-              <div key={index} className={styles.step}>
-                <div className={styles.stepInstruction}>
-                  {step.maneuver.instruction}
-                </div>
+              <li key={index} className={styles.step}>
+                <div className={styles.instruction}>{step.maneuver.instruction}</div>
                 <div className={styles.stepDetails}>
-                  {formatDistance(step.distance)} · {formatDuration(step.duration)}
+                  <span className={styles.stepDistance}>{formatDistance(step.distance)}</span>
+                  {step.duration > 30 && (
+                    <span className={styles.stepDuration}>{formatDuration(step.duration)}</span>
+                  )}
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ol>
         </div>
       )}
     </div>

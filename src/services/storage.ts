@@ -1,29 +1,31 @@
 import { Location } from '../types';
 
-const STORAGE_KEYS = {
-  LOCATIONS: 'mapapp_locations'
-} as const;
+const LOCATIONS_KEY = 'mapApp.locations';
 
+/**
+ * Storage service to handle local storage operations
+ */
 export const storageService = {
+  /**
+   * Save locations to local storage
+   */
   saveLocations(locations: Location[]): void {
     try {
-      console.log('Saving locations:', locations);
-      localStorage.setItem(STORAGE_KEYS.LOCATIONS, JSON.stringify(locations));
-      // Verify save
-      const saved = localStorage.getItem(STORAGE_KEYS.LOCATIONS);
-      console.log('Verified saved data:', saved);
+      localStorage.setItem(LOCATIONS_KEY, JSON.stringify(locations));
     } catch (error) {
-      console.error('Error saving locations to localStorage:', error);
+      console.error('Failed to save locations to local storage:', error);
     }
   },
 
+  /**
+   * Get locations from local storage
+   */
   getLocations(): Location[] {
     try {
-      const savedLocations = localStorage.getItem(STORAGE_KEYS.LOCATIONS);
-      console.log('Retrieved locations from storage:', savedLocations);
-      return savedLocations ? JSON.parse(savedLocations) : [];
+      const data = localStorage.getItem(LOCATIONS_KEY);
+      return data ? JSON.parse(data) : [];
     } catch (error) {
-      console.error('Error reading locations from localStorage:', error);
+      console.error('Failed to retrieve locations from local storage:', error);
       return [];
     }
   }
