@@ -6,11 +6,20 @@
   width: 100%;
 }
 
+:global(.dark) .directionsPanel {
+  background: #1f2937;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
 .title {
   margin: 0 0 15px;
   font-size: 16px;
   font-weight: 500;
   color: #333;
+}
+
+:global(.dark) .title {
+  color: #f3f4f6;
 }
 
 .locationSelect {
@@ -24,6 +33,10 @@
   color: #666;
 }
 
+:global(.dark) .locationSelect label {
+  color: #9ca3af;
+}
+
 .locationSelect select {
   width: 100%;
   padding: 8px;
@@ -34,9 +47,20 @@
   background: white;
 }
 
+:global(.dark) .locationSelect select {
+  border-color: #4b5563;
+  color: #f3f4f6;
+  background: #374151;
+}
+
 .locationSelect select:disabled {
   background: #f5f5f5;
   cursor: not-allowed;
+}
+
+:global(.dark) .locationSelect select:disabled {
+  background: #1f2937;
+  color: #6b7280;
 }
 
 .calculateButton {
@@ -61,10 +85,18 @@
   cursor: not-allowed;
 }
 
+:global(.dark) .calculateButton:disabled {
+  background: #4b5563;
+}
+
 .routeInfo {
   margin-top: 20px;
   border-top: 1px solid #eee;
   padding-top: 15px;
+}
+
+:global(.dark) .routeInfo {
+  border-top-color: #4b5563;
 }
 
 .routeSummary {
@@ -72,6 +104,10 @@
   border-radius: 4px;
   padding: 12px;
   margin-bottom: 15px;
+}
+
+:global(.dark) .routeSummary {
+  background: #334155;
 }
 
 .summaryItem {
@@ -82,6 +118,10 @@
   color: #333;
 }
 
+:global(.dark) .summaryItem {
+  color: #f3f4f6;
+}
+
 .summaryItem:not(:last-child) {
   margin-bottom: 8px;
 }
@@ -90,8 +130,16 @@
   color: #666;
 }
 
+:global(.dark) .label {
+  color: #9ca3af;
+}
+
 .value {
   font-weight: 500;
+}
+
+:global(.dark) .value {
+  color: #f3f4f6;
 }
 
 .steps {
@@ -105,9 +153,17 @@
   color: #333;
 }
 
+:global(.dark) .steps h4 {
+  color: #f3f4f6;
+}
+
 .step {
   padding: 10px 0;
   border-bottom: 1px solid #eee;
+}
+
+:global(.dark) .step {
+  border-bottom-color: #4b5563;
 }
 
 .step:last-child {
@@ -120,9 +176,17 @@
   margin-bottom: 4px;
 }
 
+:global(.dark) .stepInstruction {
+  color: #f3f4f6;
+}
+
 .stepDetails {
   font-size: 12px;
   color: #666;
+}
+
+:global(.dark) .stepDetails {
+  color: #9ca3af;
 }
 
 /* Responsive styles */

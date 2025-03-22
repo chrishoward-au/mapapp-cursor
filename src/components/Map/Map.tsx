@@ -8,13 +8,21 @@ import { DirectionsPanel } from './Directions/DirectionsPanel';
 import { Location, UserPreferences } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import { storageService } from '../../services/storage';
+import { DarkModeToggle } from '../DarkModeToggle';
+import { useTheme } from '../../contexts/ThemeContext';
 
 // Initialize Mapbox access token
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 const MAP_STYLES = {
-  map: 'mapbox://styles/mapbox/streets-v12',
-  satellite: 'mapbox://styles/mapbox/satellite-streets-v12'
+  map: {
+    light: 'mapbox://styles/mapbox/streets-v12',
+    dark: 'mapbox://styles/mapbox/dark-v11',
+  },
+  satellite: {
+    light: 'mapbox://styles/mapbox/satellite-streets-v12',
+    dark: 'mapbox://styles/mapbox/satellite-streets-v12', // Same for dark mode since satellite is already dark
+  }
 };
 
 const ROUTE_SOURCE_ID = 'route';
@@ -23,6 +31,7 @@ const DEFAULT_LOCATION: [number, number] = [144.9631, -37.8136]; // Melbourne, A
 const DEFAULT_ZOOM = 12;
 
 export const Map = () => {
+  const { theme } = useTheme();
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [isMapInitialized, setIsMapInitialized] = useState(false);
@@ -90,10 +99,10 @@ export const Map = () => {
         console.info('Using default location (Melbourne):', DEFAULT_LOCATION);
       }
 
-      // Initialize map
+      // Initialize map with the correct theme-based style
       map.current = new mapboxgl.Map({
         container: containerElement,
-        style: MAP_STYLES[mapStyle],
+        style: MAP_STYLES[mapStyle][theme],
         center: initialCenter,
         zoom: DEFAULT_ZOOM
       });
@@ -147,14 +156,16 @@ export const Map = () => {
     };
   }, []); // Only run once on mount
 
-  // Handle map style changes separately
+  // Handle map style changes or theme changes
   useEffect(() => {
     if (!map.current || !isMapInitialized) return;
 
+    const currentThemeMapStyle = MAP_STYLES[mapStyle][theme];
+    
     // Don't run on initial render when mapStyle is just initialized
     try {
       const currentStyle = map.current.getStyle();
-      if (currentStyle && currentStyle.name === MAP_STYLES[mapStyle]) return;
+      if (currentStyle && currentStyle.name === currentThemeMapStyle) return;
     } catch (e) {
       // Style might not be available yet
       return;
@@ -164,7 +175,7 @@ export const Map = () => {
     const currentZoom = map.current.getZoom();
 
     // Simple approach - just set the style and restore view after a brief delay
-    map.current.setStyle(MAP_STYLES[mapStyle]);
+    map.current.setStyle(currentThemeMapStyle);
     
     // Let the styledata event in LocationMarker handle marker re-creation
     setTimeout(() => {
@@ -175,7 +186,7 @@ export const Map = () => {
       }
     }, 150);
     
-  }, [mapStyle, isMapInitialized]);
+  }, [mapStyle, isMapInitialized, theme]); // Also listen for theme changes
 
   // Save locations whenever they change
   useEffect(() => {
@@ -381,6 +392,8 @@ export const Map = () => {
             </svg>
           )}
         </button>
+        
+        <DarkModeToggle />
       </div>
     </div>
   );
