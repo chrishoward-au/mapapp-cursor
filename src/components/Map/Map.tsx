@@ -5,6 +5,7 @@ import styles from './Map.module.css';
 import { LocationMarker } from './LocationMarker';
 import { LocationList } from './LocationList';
 import { DirectionsPanel, DirectionType } from './Directions/DirectionsPanel';
+import { AddLocationModal } from './AddLocationModal';
 import { Location, UserPreferences } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import { storageService } from '../../services/storage';
@@ -48,6 +49,10 @@ export const Map = () => {
   const [routeStartLocation, setRouteStartLocation] = useState<Location | null>(null);
   const [routeEndLocation, setRouteEndLocation] = useState<Location | null>(null);
   const [routeDirectionType, setRouteDirectionType] = useState<DirectionType>('walking');
+  
+  // Add state for the modal
+  const [isAddLocationModalOpen, setIsAddLocationModalOpen] = useState(false);
+  const [newLocationCoordinates, setNewLocationCoordinates] = useState<[number, number] | null>(null);
   
   // Load locations from storage on component mount
   useEffect(() => {
@@ -146,20 +151,11 @@ export const Map = () => {
         }, 1000);
       });
 
-      // Add click handler for adding locations
+      // Replace prompt with modal for adding locations
       map.current.on('click', (e) => {
         const coordinates: [number, number] = [e.lngLat.lng, e.lngLat.lat];
-        const name = prompt('Enter location name:');
-        if (name) {
-          const newLocation: Location = {
-            id: uuidv4(),
-            name,
-            coordinates,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          };
-          setLocations(prev => [...prev, newLocation]);
-        }
+        setNewLocationCoordinates(coordinates);
+        setIsAddLocationModalOpen(true);
       });
     };
 
@@ -347,6 +343,28 @@ export const Map = () => {
     }
   };
 
+  // Add handler for saving a new location from the modal
+  const handleSaveLocation = (name: string) => {
+    if (newLocationCoordinates) {
+      const newLocation: Location = {
+        id: uuidv4(),
+        name,
+        coordinates: newLocationCoordinates,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      setLocations(prev => [...prev, newLocation]);
+      setIsAddLocationModalOpen(false);
+      setNewLocationCoordinates(null);
+    }
+  };
+
+  // Add handler for canceling the modal
+  const handleCancelAddLocation = () => {
+    setIsAddLocationModalOpen(false);
+    setNewLocationCoordinates(null);
+  };
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.mapWrapper}>
@@ -433,6 +451,14 @@ export const Map = () => {
         
         <DarkModeToggle />
       </div>
+
+      {/* Add the modal to the component */}
+      <AddLocationModal
+        isOpen={isAddLocationModalOpen}
+        coordinates={newLocationCoordinates}
+        onSave={handleSaveLocation}
+        onCancel={handleCancelAddLocation}
+      />
     </div>
   );
 }; 
