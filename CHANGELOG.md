@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.8] - 2024-03-21
+
+### Changed
+- Reduced the size of map markers to 80% of their original size for better visual balance
+- Improved overall map appearance with more proportional marker sizing
+
 ## [0.2.7] - 2024-03-21
 
 ### Changed
