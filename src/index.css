@@ -117,20 +117,15 @@ body {
   border-color: #555;
 }
 
+/* Restore the geolocate control in dark mode */
 .dark .mapboxgl-ctrl-group button {
   filter: invert(0.8);
 }
 
-/* Style geolocate control */
-.mapboxgl-ctrl-geolocate {
-  background-color: white;
-  border-radius: 4px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-
-.dark .mapboxgl-ctrl-geolocate {
-  background-color: #333;
-  filter: invert(0.8);
+/* Don't apply invert filter to the actual geolocate active position indicator (the blue dot) */
+.dark .mapboxgl-user-location-dot,
+.dark .mapboxgl-user-location-accuracy-circle {
+  filter: none !important;
 }
 
 button {
