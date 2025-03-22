@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import styles from './Map.module.css';
@@ -8,13 +8,21 @@ import { DirectionsPanel } from './Directions/DirectionsPanel';
 import { Location, UserPreferences } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import { storageService } from '../../services/storage';
+import DarkModeToggle from '../UI/DarkModeToggle';
+import { useTheme } from '../../contexts/ThemeContext';
 
 // Initialize Mapbox access token
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
 
 const MAP_STYLES = {
-  map: 'mapbox://styles/mapbox/streets-v12',
-  satellite: 'mapbox://styles/mapbox/satellite-streets-v12'
+  light: {
+    map: 'mapbox://styles/mapbox/streets-v12',
+    satellite: 'mapbox://styles/mapbox/satellite-streets-v12'
+  },
+  dark: {
+    map: 'mapbox://styles/mapbox/dark-v11',
+    satellite: 'mapbox://styles/mapbox/satellite-streets-v12'
+  }
 };
 
 const ROUTE_SOURCE_ID = 'route';
@@ -25,12 +33,14 @@ const DEFAULT_ZOOM = 12;
 export const Map = () => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
+  const geolocateControl = useRef<mapboxgl.GeolocateControl | null>(null);
   const [isMapInitialized, setIsMapInitialized] = useState(false);
   const [activePanel, setActivePanel] = useState<'none' | 'locations' | 'directions'>('none');
   const [locations, setLocations] = useState<Location[]>([]);
   const [mapStyle, setMapStyle] = useState<UserPreferences['defaultMapLayer']>('map');
   const [markersKey, setMarkersKey] = useState(0); // Add a key to force marker re-creation
   const [isLoading, setIsLoading] = useState(true);
+  const { isDarkMode } = useTheme();
   
   // Load locations from storage on component mount
   useEffect(() => {
@@ -85,15 +95,15 @@ export const Map = () => {
       let initialCenter: [number, number] = DEFAULT_LOCATION;
       try {
         initialCenter = await getUserLocation();
-        console.info('Using user location:', initialCenter);
       } catch (error) {
-        console.info('Using default location (Melbourne):', DEFAULT_LOCATION);
+        console.warn('Using default location:', DEFAULT_LOCATION);
       }
 
-      // Initialize map
+      // Initialize map with theme-based style
+      const themeStyle = isDarkMode ? MAP_STYLES.dark : MAP_STYLES.light;
       map.current = new mapboxgl.Map({
         container: containerElement,
-        style: MAP_STYLES[mapStyle],
+        style: themeStyle[mapStyle],
         center: initialCenter,
         zoom: DEFAULT_ZOOM
       });
@@ -101,24 +111,46 @@ export const Map = () => {
       // Add navigation controls
       map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
       
-      // Add user location control (the pip)
-      map.current.addControl(
-        new mapboxgl.GeolocateControl({
-          positionOptions: {
-            enableHighAccuracy: true
-          },
-          trackUserLocation: true,
-          showUserHeading: true,
-          showAccuracyCircle: true
-        }),
-        'top-right'
-      );
+      // Add user location control (the pip) - we'll manually trigger it after checking permissions
+      geolocateControl.current = new mapboxgl.GeolocateControl({
+        positionOptions: {
+          enableHighAccuracy: true
+        },
+        trackUserLocation: true,
+        showUserHeading: true,
+        showAccuracyCircle: true
+      });
+      
+      map.current.addControl(geolocateControl.current, 'top-right');
 
       // Wait for map to fully load before setting initialized state
       map.current.on('load', () => {
         addRouteLayer();
         setIsMapInitialized(true);
         setMarkersKey(prev => prev + 1);
+        
+        // Check if we already have geolocation permission from a previous session
+        const hasGeolocationPermission = localStorage.getItem('hasGeolocationPermission');
+        
+        // Only trigger after a delay if we have permission, to avoid re-prompting
+        if (hasGeolocationPermission === 'true') {
+          setTimeout(() => {
+            geolocateControl.current?.trigger();
+          }, 1000);
+        }
+        
+        // Listen for the geolocate event to track permissions
+        if (geolocateControl.current) {
+          geolocateControl.current.on('geolocate', () => {
+            // Store that permission was granted
+            localStorage.setItem('hasGeolocationPermission', 'true');
+          });
+          
+          geolocateControl.current.on('error', () => {
+            // Permission might have been denied
+            localStorage.setItem('hasGeolocationPermission', 'false');
+          });
+        }
       });
 
       // Add click handler for adding locations
@@ -145,16 +177,20 @@ export const Map = () => {
       map.current?.remove();
       setIsMapInitialized(false);
     };
-  }, []); // Only run once on mount
+  }, [isDarkMode]); // Re-initialize map when dark mode changes
 
   // Handle map style changes separately
   useEffect(() => {
     if (!map.current || !isMapInitialized) return;
 
+    // Get the theme-appropriate style
+    const themeStyle = isDarkMode ? MAP_STYLES.dark : MAP_STYLES.light;
+    const newStyleUrl = themeStyle[mapStyle];
+
     // Don't run on initial render when mapStyle is just initialized
     try {
       const currentStyle = map.current.getStyle();
-      if (currentStyle && currentStyle.name === MAP_STYLES[mapStyle]) return;
+      if (currentStyle && currentStyle.name === newStyleUrl) return;
     } catch (e) {
       // Style might not be available yet
       return;
@@ -164,7 +200,7 @@ export const Map = () => {
     const currentZoom = map.current.getZoom();
 
     // Simple approach - just set the style and restore view after a brief delay
-    map.current.setStyle(MAP_STYLES[mapStyle]);
+    map.current.setStyle(newStyleUrl);
     
     // Let the styledata event in LocationMarker handle marker re-creation
     setTimeout(() => {
@@ -172,10 +208,15 @@ export const Map = () => {
         map.current.setCenter(currentCenter);
         map.current.setZoom(currentZoom);
         addRouteLayer();
+        
+        // Re-trigger location after style change
+        setTimeout(() => {
+          geolocateControl.current?.trigger();
+        }, 200);
       }
     }, 150);
     
-  }, [mapStyle, isMapInitialized]);
+  }, [mapStyle, isMapInitialized, isDarkMode]);
 
   // Save locations whenever they change
   useEffect(() => {
@@ -287,7 +328,7 @@ export const Map = () => {
         // Fit map to route bounds
         const bounds = coordinates.reduce(
           (bounds: mapboxgl.LngLatBounds, coord: [number, number]) => bounds.extend(coord),
-          new mapboxgl.LngLatBounds(coordinates[0] as [number, number], coordinates[0] as [number, number])
+          new mapboxgl.LngLatBounds(coordinates[0], coordinates[0])
         );
 
         map.current.fitBounds(bounds, {
@@ -307,79 +348,75 @@ export const Map = () => {
   };
 
   return (
-    <div className={styles.wrapper}>
+    <div className={`${styles.wrapper} ${isDarkMode ? 'dark' : ''}`}>
       <div className={styles.mapWrapper}>
         <div ref={mapContainer} className={styles.mapContainer} />
-        {isMapInitialized && map.current && (
-          <div key={markersKey}>
-            {locations.map(location => (
-              <LocationMarker
-                key={location.id}
-                map={map.current as mapboxgl.Map}
-                location={location}
-                onClick={handleLocationSelect}
-              />
-            ))}
+        <div className={`${styles.uiContainer} dark:bg-gray-800 dark:text-white`}>
+          <div className={styles.toggleContainer}>
+            <DarkModeToggle />
           </div>
-        )}
+          <div className="flex flex-col gap-2">
+            <button
+              className={`${styles.styleButton} dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600`}
+              onClick={() => handleLayerChange('map')}
+            >
+              {mapStyle === 'map' ? '🗺️ Map' : 'Map'}
+            </button>
+            <button
+              className={`${styles.styleButton} dark:bg-gray-700 dark:text-white dark:hover:bg-gray-600`}
+              onClick={() => handleLayerChange('satellite')}
+            >
+              {mapStyle === 'satellite' ? '🛰️ Satellite' : 'Satellite'}
+            </button>
+          </div>
+        </div>
       </div>
-
-      <div className={`${styles.panel} ${activePanel === 'none' ? styles.hidden : ''}`}>
-        {activePanel === 'locations' && (
-          <LocationList
-            locations={locations}
+      
+      {isMapInitialized && locations.map((location) => (
+        <LocationMarker
+          key={`${location.id}-${markersKey}`}
+          map={map.current!}
+          location={location}
+          onClick={() => handleLocationSelect(location)}
+        />
+      ))}
+      
+      <div 
+        className={`${styles.panel} ${activePanel === 'none' ? styles.hidden : ''} dark:bg-gray-800 dark:text-white`}
+      >
+        {activePanel === 'locations' ? (
+          <LocationList 
+            locations={locations} 
             onLocationSelect={handleLocationSelect}
             onLocationDelete={handleLocationDelete}
           />
-        )}
-        {activePanel === 'directions' && (
-          <DirectionsPanel
+        ) : activePanel === 'directions' ? (
+          <DirectionsPanel 
             locations={locations}
             onRouteSelect={handleRouteSelect}
           />
-        )}
+        ) : null}
       </div>
-
-      <div className={styles.actionBar}>
+      
+      <div className={`${styles.actionBar} dark:bg-gray-900 dark:border-t dark:border-gray-700`}>
         <button
-          className={`${styles.actionButton} ${activePanel === 'locations' ? styles.active : ''}`}
+          className={`${styles.actionButton} ${activePanel === 'locations' ? styles.active : ''} dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white`}
           onClick={() => togglePanel('locations')}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-            <circle cx="12" cy="10" r="3"/>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
           </svg>
+          Locations
         </button>
         <button
-          className={`${styles.actionButton} ${activePanel === 'directions' ? styles.active : ''}`}
+          className={`${styles.actionButton} ${activePanel === 'directions' ? styles.active : ''} dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white`}
           onClick={() => togglePanel('directions')}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="22" y1="2" x2="11" y2="13"/>
-            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
           </svg>
-        </button>
-        
-        <button
-          className={`${styles.actionButton}`}
-          onClick={() => handleLayerChange(mapStyle === 'map' ? 'satellite' : 'map')}
-          title={mapStyle === 'map' ? 'Switch to satellite view' : 'Switch to map view'}
-        >
-          {mapStyle === 'map' ? (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="2" y1="12" x2="22" y2="12"/>
-              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-            </svg>
-          ) : (
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-              <line x1="3" y1="9" x2="21" y2="9"/>
-              <line x1="3" y1="15" x2="21" y2="15"/>
-              <line x1="9" y1="3" x2="9" y2="21"/>
-              <line x1="15" y1="3" x2="15" y2="21"/>
-            </svg>
-          )}
+          Directions
         </button>
       </div>
     </div>

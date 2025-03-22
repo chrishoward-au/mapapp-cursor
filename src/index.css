@@ -1,3 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Existing custom CSS can go here */
+
 * {
   margin: 0;
   padding: 0;

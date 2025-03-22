@@ -65,5 +65,38 @@
 - Implemented tab interface for better UI organization
 - Set up basic route selection functionality
 
+## Data Storage
+- [ ] Implement cross-browser storage solution for a single device
+- [ ] Research and implement cloud storage for cross-device synchronization
+- [ ] Add offline data persistence for saved routes and locations
+
+## UI/UX Improvements
+- [ ] Add info popup when clicking a marker
+- [ ] Redesign location list UI for mobile-friendly experience
+- [ ] Redesign directions panel UI for mobile-friendly experience
+- [ ] Implement dark mode that applies to all components (including Mapbox elements)
+
+## Route Functionality
+- [ ] Enable setting routes by clicking markers
+- [ ] Add ability to use current user location as route start/end point
+- [ ] Support adding multiple waypoints to build complex routes
+- [ ] Implement route saving for offline access
+- [ ] Add route editing capabilities (reordering, removing waypoints)
+
+## Map Features
+- [ ] Add township weather labels layer
+- [ ] Improve map control positioning for mobile devices
+- [ ] Add custom map layers for different use cases (hiking, cycling, etc.)
+
+## Performance & Technical Debt
+- [ ] Optimize marker rendering for large numbers of saved locations
+- [ ] Improve load time for saved routes
+- [ ] Handle offline mode gracefully
+
+## Future Considerations
+- [ ] User accounts and authentication
+- [ ] Sharing routes with other users
+- [ ] Integration with other navigation/mapping services
+
 ---
 Last Updated: 2024-03-21 
