@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './DirectionsPanel.module.css';
 import { Location } from '../../../types';
+import { Car, Bike, X, Footprints } from 'lucide-react';
 
 // Define direction types
 export type DirectionType = 'driving' | 'walking' | 'cycling';
@@ -96,36 +97,12 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
   const getDirectionTypeIcon = (type: DirectionType) => {
     switch (type) {
       case 'driving':
-        return (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="1" y="3" width="15" height="13" rx="2" ry="2"/>
-            <path d="M16 8h4l3 3v7a2 2 0 0 1-2 2h-5"/>
-            <circle cx="5.5" cy="18.5" r="2.5"/>
-            <circle cx="15.5" cy="18.5" r="2.5"/>
-          </svg>
-        );
+        return <Car size={16} />;
       case 'cycling':
-        return (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="5" cy="17" r="3"/>
-            <circle cx="19" cy="17" r="3"/>
-            <path d="M9 17H5.34"/>
-            <path d="M19 17h-3.66"/>
-            <path d="M14.29 7.71 12 10l-2.29-2.29a1 1 0 0 1 0-1.42l4.58-4.58a1 1 0 0 1 1.42 0L17 3"/>
-            <path d="m12 10-3 3 2.83 2.83a1 1 0 0 0 1.41 0L15 14l-3-4Z"/>
-          </svg>
-        );
+        return <Bike size={16} />;
       case 'walking':
       default:
-        return (
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M13 4v16"/>
-            <path d="M19 4v10"/>
-            <path d="M7 4v6"/>
-            <path d="M7 14v6"/>
-            <path d="M19 16v4"/>
-          </svg>
-        );
+        return <Footprints size={16} />;
     }
   };
 
@@ -134,10 +111,7 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
       <div className={styles.panelHeader}>
         <h3 className={styles.title}>Directions</h3>
         <button className={styles.closeButton} onClick={onClose} aria-label="Close directions panel">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
+          <X size={16} />
         </button>
       </div>
       
