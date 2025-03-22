@@ -267,6 +267,7 @@ export const Map = () => {
   };
 
   const togglePanel = (panel: 'locations' | 'directions') => {
+    // Don't auto-close when toggling - only set the active panel
     setActivePanel(current => current === panel ? 'none' : panel);
   };
 
@@ -285,6 +286,9 @@ export const Map = () => {
 
   const handleRouteSelect = async (start: Location, end: Location, directionType: DirectionType = 'walking') => {
     if (!map.current) return;
+
+    // Detect if this is a new route calculation or a route update
+    const isNewRoute = !(routeStartLocation && routeEndLocation);
 
     try {
       // Store the current route type for use in styling
@@ -333,8 +337,11 @@ export const Map = () => {
           duration: 1000
         });
         
-        // Auto-close the directions panel after a successful route calculation
-        setActivePanel('none');
+        // Only auto-close the directions panel after the initial route calculation
+        // Don't close when updating an existing route
+        if (isNewRoute) {
+          setActivePanel('none');
+        }
 
         return {
           distance: route.distance,
