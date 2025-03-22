@@ -280,6 +280,14 @@ export const Map = () => {
     }
   };
 
+  // Debug logging for panel state
+  useEffect(() => {
+    console.log('Active panel:', activePanel);
+    if (activePanel === 'locations') {
+      console.log('Locations panel showing with', locations.length, 'locations');
+    }
+  }, [activePanel, locations]);
+
   return (
     <div className={styles.wrapper}>
       <div className={styles.mapWrapper}>
@@ -303,6 +311,7 @@ export const Map = () => {
         </div>
       </div>
 
+      {/* Panel is now a direct child of wrapper */}
       <div className={`${styles.panel} ${activePanel === 'none' ? styles.hidden : ''}`}>
         {activePanel === 'locations' && (
           <LocationList
