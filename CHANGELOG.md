@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2024-03-21
+
+### Fixed
+- Improved locations panel visibility with fixed positioning
+- Enhanced panel styling with stronger shadow and border highlight
+- Added padding for better content presentation
+- Fixed z-index and positioning to ensure panel appears above map
+- Added debug logging for panel state tracking
+
 ## [0.2.1] - 2024-03-21
 
 ### Fixed
