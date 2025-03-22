@@ -21,31 +21,6 @@
   height: 100%;
 }
 
-.mapUI {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 1;
-}
-
-/* Ensure UI elements can receive pointer events */
-.mapUI > * {
-  pointer-events: auto;
-}
-
-.layerToggle {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: white;
-  padding: 8px;
-  border-radius: 4px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-
 .actionBar {
   width: 100%;
   background: white;
@@ -53,7 +28,7 @@
   display: flex;
   justify-content: center;
   padding: 10px;
-  gap: 10px;
+  gap: 16px; /* Increased gap for better spacing */
   z-index: 2;
 }
 
@@ -92,8 +67,8 @@
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2); /* Stronger shadow */
   max-height: 50vh;
   overflow-y: auto;
-  position: fixed; /* Changed from absolute to fixed */
-  bottom: 60px; /* Position above the action bar */
+  position: relative; /* Changed from fixed to relative */
+  bottom: 0; /* Position above the action bar */
   left: 0;
   width: 100%;
   transform: translateY(0);
@@ -103,6 +78,8 @@
   z-index: 10; /* Ensure it's above other elements */
   padding: 16px; /* Add padding for content */
   border-top: 3px solid #4264fb; /* Blue highlight at top */
+  display: flex;
+  justify-content: center;
 }
 
 .panel.hidden {

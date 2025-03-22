@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import styles from './Map.module.css';
-import { LayerToggle } from './LayerToggle';
 import { LocationMarker } from './LocationMarker';
 import { LocationList } from './LocationList';
 import { DirectionsPanel } from './Directions/DirectionsPanel';
@@ -304,11 +303,6 @@ export const Map = () => {
             ))}
           </div>
         )}
-        <div className={styles.mapUI}>
-          <div className={styles.layerToggle}>
-            <LayerToggle onLayerChange={handleLayerChange} />
-          </div>
-        </div>
       </div>
 
       {/* Panel is now a direct child of wrapper */}
@@ -346,6 +340,28 @@ export const Map = () => {
             <line x1="22" y1="2" x2="11" y2="13"/>
             <polygon points="22 2 15 22 11 13 2 9 22 2"/>
           </svg>
+        </button>
+        
+        <button
+          className={`${styles.actionButton}`}
+          onClick={() => handleLayerChange(mapStyle === 'map' ? 'satellite' : 'map')}
+          title={mapStyle === 'map' ? 'Switch to satellite view' : 'Switch to map view'}
+        >
+          {mapStyle === 'map' ? (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M8 2h8"/>
+              <path d="M12 14v-4"/>
+              <path d="M4 6c0 1.1.9 2 2 2s2-.9 2-2-.9-2-2-2-2 .9-2 2z"/>
+              <path d="M14 6c0 1.1.9 2 2 2s2-.9 2-2-.9-2-2-2-2 .9-2 2z"/>
+              <rect x="2" y="14" width="20" height="8" rx="2"/>
+            </svg>
+          )}
         </button>
       </div>
     </div>
