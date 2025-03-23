@@ -92,17 +92,30 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
     }
   };
 
-  // Handle changing to a different route option
-  const handleRouteOptionChange = async (routeIndex: number) => {
-    if (routeIndex < 0 || routeIndex >= (availableRoutes || 0)) return;
-    
-    try {
-      const info = await onRouteChange(routeIndex);
-      if (info) {
-        setRouteInfo(info);
+  // Handle changing route options
+  const handleRouteOptionChange = async (index: number) => {
+    if (availableRoutes > 0) {
+      // Implement looping behavior
+      let nextIndex = index;
+      
+      // If going past the last route, loop to the first
+      if (nextIndex >= availableRoutes) {
+        nextIndex = 0;
       }
-    } catch (error) {
-      console.error('Error changing route option:', error);
+      
+      // If going before the first route, loop to the last
+      if (nextIndex < 0) {
+        nextIndex = availableRoutes - 1;
+      }
+      
+      try {
+        const info = await onRouteChange(nextIndex);
+        if (info) {
+          setRouteInfo(info);
+        }
+      } catch (error) {
+        console.error('Error changing route option:', error);
+      }
     }
   };
 
