@@ -4,7 +4,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import styles from './Map.module.css';
 import { LocationMarker } from './LocationMarker';
 import { LocationList } from './LocationList';
-import { DirectionsPanel, DirectionType } from './Directions/DirectionsPanel';
+import { DirectionsPanel, DirectionType, RouteInfo } from './Directions/DirectionsPanel';
 import { AddLocationModal } from './AddLocationModal';
 import { Location, UserPreferences } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
@@ -41,6 +41,22 @@ const ROUTE_COLORS = {
   driving: '#f59e0b'  // amber
 };
 
+// Interface for storing multiple routes
+interface RouteOption {
+  index: number;
+  distance: number;
+  duration: number;
+  steps: Array<{
+    maneuver: {
+      instruction: string;
+    };
+    distance: number;
+  }>;
+  geometry: {
+    coordinates: [number, number][];
+  };
+}
+
 export const Map = () => {
   const { theme } = useTheme();
   const mapContainer = useRef<HTMLDivElement>(null);
@@ -58,6 +74,10 @@ export const Map = () => {
   const [routeStartLocation, setRouteStartLocation] = useState<Location | null>(null);
   const [routeEndLocation, setRouteEndLocation] = useState<Location | null>(null);
   const [routeDirectionType, setRouteDirectionType] = useState<DirectionType>('walking');
+  
+  // State for multiple routes
+  const [availableRoutes, setAvailableRoutes] = useState<RouteOption[]>([]);
+  const [currentRouteIndex, setCurrentRouteIndex] = useState<number>(0);
   
   // Add state for the modal
   const [isAddLocationModalOpen, setIsAddLocationModalOpen] = useState(false);
@@ -300,6 +320,9 @@ export const Map = () => {
       setRouteEndLocation(end);
       setRouteDirectionType(directionType);
 
+      // Reset route selection when parameters change
+      setCurrentRouteIndex(0);
+
       // Update route line color based on the direction type
       if (map.current.getLayer(ROUTE_LAYER_ID)) {
         map.current.setPaintProperty(ROUTE_LAYER_ID, 'line-color', ROUTE_COLORS[directionType]);
@@ -307,12 +330,24 @@ export const Map = () => {
 
       // Get route from Mapbox Directions API - using the selected profile (walking, cycling, driving)
       const query = await fetch(
-        `https://api.mapbox.com/directions/v5/mapbox/${directionType}/${start.coordinates[0]},${start.coordinates[1]};${end.coordinates[0]},${end.coordinates[1]}?geometries=geojson&overview=full&steps=true&access_token=${mapboxgl.accessToken}`
+        `https://api.mapbox.com/directions/v5/mapbox/${directionType}/${start.coordinates[0]},${start.coordinates[1]};${end.coordinates[0]},${end.coordinates[1]}?geometries=geojson&overview=full&steps=true&alternatives=true&access_token=${mapboxgl.accessToken}`
       );
       const json = await query.json();
 
-      if (json.routes?.[0]) {
-        const route = json.routes[0];
+      if (json.routes && json.routes.length > 0) {
+        // Store all available routes
+        const routes = json.routes.map((route: any, index: number) => ({
+          index,
+          distance: route.distance,
+          duration: route.duration,
+          steps: route.legs[0].steps,
+          geometry: route.geometry
+        }));
+        
+        setAvailableRoutes(routes);
+        
+        // Display the first route by default
+        const route = routes[0];
         const coordinates = route.geometry.coordinates;
 
         // Update route on the map
@@ -337,18 +372,64 @@ export const Map = () => {
           padding: 50,
           duration: 1000
         });
-        
-        // No longer auto-close the panel after route calculation
-        // setActivePanel('none');
 
+        // Return the current route info and the total number of routes
         return {
           distance: route.distance,
           duration: route.duration,
-          steps: route.legs[0].steps
+          steps: route.legs[0].steps,
+          routeOptions: routes.length,
+          currentRouteIndex: 0
         };
       }
     } catch (error) {
       console.error('Error fetching route:', error);
+    }
+  };
+
+  // Handle changing to a different route option
+  const handleRouteChange = (routeIndex: number) => {
+    if (!map.current || routeIndex < 0 || routeIndex >= availableRoutes.length) return;
+    
+    try {
+      setCurrentRouteIndex(routeIndex);
+      
+      const selectedRoute = availableRoutes[routeIndex];
+      const coordinates = selectedRoute.geometry.coordinates;
+      
+      // Update the route on the map
+      if (map.current.getSource(ROUTE_SOURCE_ID)) {
+        (map.current.getSource(ROUTE_SOURCE_ID) as mapboxgl.GeoJSONSource).setData({
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates
+          }
+        });
+      }
+      
+      // Fit map to the new route bounds
+      const bounds = coordinates.reduce(
+        (bounds: mapboxgl.LngLatBounds, coord: [number, number]) => bounds.extend(coord),
+        new mapboxgl.LngLatBounds(coordinates[0] as [number, number], coordinates[0] as [number, number])
+      );
+      
+      map.current.fitBounds(bounds, {
+        padding: { top: 50, bottom: 50, left: activePanel === 'directions' ? 350 : 50, right: 50 },
+        duration: 1000
+      });
+      
+      // Return the updated route info
+      return {
+        distance: selectedRoute.distance,
+        duration: selectedRoute.duration,
+        steps: selectedRoute.steps,
+        routeOptions: availableRoutes.length,
+        currentRouteIndex: routeIndex
+      };
+    } catch (error) {
+      console.error('Error changing route:', error);
     }
   };
 
@@ -481,6 +562,9 @@ export const Map = () => {
             onStartLocationChange={setRouteStartLocation}
             onEndLocationChange={setRouteEndLocation}
             onDirectionTypeChange={setRouteDirectionType}
+            availableRoutes={availableRoutes.length}
+            currentRouteIndex={currentRouteIndex}
+            onRouteChange={handleRouteChange}
             onClose={() => setActivePanel('none')}
           />
         )}

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import styles from './DirectionsPanel.module.css';
 import { Location } from '../../../types';
-import { Car, Bike, X, Footprints } from 'lucide-react';
+import { Car, Bike, X, Footprints, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Define direction types
 export type DirectionType = 'driving' | 'walking' | 'cycling';
 
-interface RouteInfo {
+export interface RouteInfo {
   distance: number;
   duration: number;
   steps: Array<{
@@ -15,15 +15,20 @@ interface RouteInfo {
     };
     distance: number;
   }>;
+  routeOptions?: number;
+  currentRouteIndex?: number;
 }
 
 interface DirectionsPanelProps {
   locations: Location[];
   onRouteSelect: (start: Location, end: Location, directionType: DirectionType) => Promise<RouteInfo | undefined>;
+  onRouteChange: (routeIndex: number) => Promise<RouteInfo | undefined>;
   // New props for controlling route state from parent
   startLocation: Location | null;
   endLocation: Location | null;
   directionType: DirectionType;
+  availableRoutes: number;
+  currentRouteIndex: number;
   onStartLocationChange: (location: Location | null) => void;
   onEndLocationChange: (location: Location | null) => void;
   onDirectionTypeChange: (type: DirectionType) => void;
@@ -33,9 +38,12 @@ interface DirectionsPanelProps {
 export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
   locations,
   onRouteSelect,
+  onRouteChange,
   startLocation,
   endLocation,
   directionType,
+  availableRoutes,
+  currentRouteIndex,
   onStartLocationChange,
   onEndLocationChange,
   onDirectionTypeChange,
@@ -74,6 +82,20 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
       }
     } catch (error) {
       console.error('Error calculating route:', error);
+    }
+  };
+
+  // Handle changing to a different route option
+  const handleRouteOptionChange = async (routeIndex: number) => {
+    if (routeIndex < 0 || routeIndex >= (availableRoutes || 0)) return;
+    
+    try {
+      const info = await onRouteChange(routeIndex);
+      if (info) {
+        setRouteInfo(info);
+      }
+    } catch (error) {
+      console.error('Error changing route option:', error);
     }
   };
 
@@ -193,6 +215,43 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
               <span>{formatDuration(routeInfo.duration)}</span>
             </div>
           </div>
+
+          {/* Route alternatives navigator - only show if there are multiple routes */}
+          {availableRoutes > 1 && (
+            <div className={styles.routeAlternatives}>
+              <div className={styles.routeAlternativesTitle}>
+                Route options ({currentRouteIndex + 1}/{availableRoutes})
+              </div>
+              <div className={styles.routeNavigator}>
+                <button 
+                  className={styles.routeNavButton}
+                  onClick={() => handleRouteOptionChange(currentRouteIndex - 1)}
+                  disabled={currentRouteIndex === 0}
+                  aria-label="Previous route option"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                <div className={styles.routeIndicators}>
+                  {[...Array(availableRoutes)].map((_, index) => (
+                    <button
+                      key={index}
+                      className={`${styles.routeDot} ${index === currentRouteIndex ? styles.active : ''}`}
+                      onClick={() => handleRouteOptionChange(index)}
+                      aria-label={`Route option ${index + 1}`}
+                    />
+                  ))}
+                </div>
+                <button 
+                  className={styles.routeNavButton}
+                  onClick={() => handleRouteOptionChange(currentRouteIndex + 1)}
+                  disabled={currentRouteIndex === availableRoutes - 1}
+                  aria-label="Next route option"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+          )}
           
           <div className={styles.steps}>
             <h4>Directions:</h4>
