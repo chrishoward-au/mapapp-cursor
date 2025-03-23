@@ -362,17 +362,29 @@ export const Map = () => {
           });
         }
 
-        // Fit map to route bounds if coordinates exist
-        if (coordinates && coordinates.length > 0) {
-          const bounds = coordinates.reduce(
-            (bounds: mapboxgl.LngLatBounds, coord: [number, number]) => bounds.extend(coord),
-            new mapboxgl.LngLatBounds(coordinates[0] as [number, number], coordinates[0] as [number, number])
-          );
-
-          map.current.fitBounds(bounds, {
-            padding: 50,
-            duration: 1000
-          });
+        // Fit map to route bounds if coordinates exist and are valid
+        if (coordinates && Array.isArray(coordinates) && coordinates.length > 0) {
+          try {
+            // Create bounds object more safely
+            const bounds = new mapboxgl.LngLatBounds();
+            
+            // Add each coordinate to the bounds
+            coordinates.forEach((coord: [number, number]) => {
+              if (Array.isArray(coord) && coord.length >= 2) {
+                bounds.extend(coord);
+              }
+            });
+            
+            // Only fit bounds if we've added coordinates
+            if (!bounds.isEmpty()) {
+              map.current.fitBounds(bounds, {
+                padding: 50,
+                duration: 1000
+              });
+            }
+          } catch (error) {
+            console.warn('Error creating bounds for route:', error);
+          }
         }
 
         // Return the current route info and the total number of routes
@@ -411,17 +423,29 @@ export const Map = () => {
         });
       }
       
-      // Fit map to the new route bounds if coordinates exist
-      if (coordinates && coordinates.length > 0) {
-        const bounds = coordinates.reduce(
-          (bounds: mapboxgl.LngLatBounds, coord: [number, number]) => bounds.extend(coord),
-          new mapboxgl.LngLatBounds(coordinates[0] as [number, number], coordinates[0] as [number, number])
-        );
-        
-        map.current.fitBounds(bounds, {
-          padding: { top: 50, bottom: 50, left: activePanel === 'directions' ? 350 : 50, right: 50 },
-          duration: 1000
-        });
+      // Fit map to the new route bounds if coordinates exist and are valid
+      if (coordinates && Array.isArray(coordinates) && coordinates.length > 0) {
+        try {
+          // Create bounds object more safely
+          const bounds = new mapboxgl.LngLatBounds();
+          
+          // Add each coordinate to the bounds
+          coordinates.forEach((coord: [number, number]) => {
+            if (Array.isArray(coord) && coord.length >= 2) {
+              bounds.extend(coord);
+            }
+          });
+          
+          // Only fit bounds if we've added coordinates
+          if (!bounds.isEmpty()) {
+            map.current.fitBounds(bounds, {
+              padding: { top: 50, bottom: 50, left: activePanel === 'directions' ? 350 : 50, right: 50 },
+              duration: 1000
+            });
+          }
+        } catch (error) {
+          console.warn('Error creating bounds for route change:', error);
+        }
       }
       
       // Return the updated route info
@@ -507,16 +531,28 @@ export const Map = () => {
                 
                 if (Array.isArray(coordinates) && coordinates.length > 0) {
                   // Create bounds that fit all route coordinates
-                  const bounds = coordinates.reduce(
-                    (bounds: mapboxgl.LngLatBounds, coord: [number, number]) => bounds.extend(coord),
-                    new mapboxgl.LngLatBounds(coordinates[0] as [number, number], coordinates[0] as [number, number])
-                  );
-                  
-                  // Fit to bounds with a slight delay to ensure UI has settled
-                  map.current.fitBounds(bounds, {
-                    padding: { top: 50, bottom: 50, left: 350, right: 50 }, // Extra padding on left for panel
-                    duration: 500
-                  });
+                  try {
+                    // Create bounds object more safely
+                    const bounds = new mapboxgl.LngLatBounds();
+                    
+                    // Add each coordinate to the bounds
+                    coordinates.forEach((coord: [number, number]) => {
+                      if (Array.isArray(coord) && coord.length >= 2) {
+                        bounds.extend(coord);
+                      }
+                    });
+                    
+                    // Only fit bounds if we've added coordinates
+                    if (!bounds.isEmpty()) {
+                      // Fit to bounds with a slight delay to ensure UI has settled
+                      map.current.fitBounds(bounds, {
+                        padding: { top: 50, bottom: 50, left: 350, right: 50 }, // Extra padding on left for panel
+                        duration: 500
+                      });
+                    }
+                  } catch (error) {
+                    console.warn('Error creating bounds during resize:', error);
+                  }
                 }
               }
             }
