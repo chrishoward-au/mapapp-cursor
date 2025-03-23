@@ -334,68 +334,71 @@ export const Map = () => {
       );
       const json = await query.json();
 
-      if (json.routes && json.routes.length > 0) {
-        // Store all available routes
-        const routes = json.routes.map((route: any, index: number) => ({
-          index,
-          distance: route.distance,
-          duration: route.duration,
-          steps: route.legs[0].steps,
-          geometry: route.geometry
-        }));
-        
-        setAvailableRoutes(routes);
-        
-        // Display the first route by default
-        const route = routes[0];
-        const coordinates = route.geometry.coordinates;
+      if (!json.routes || json.routes.length === 0) {
+        console.warn('No routes found');
+        return;
+      }
+      
+      // Store all available routes
+      const routes = json.routes.map((route: any, index: number) => ({
+        index,
+        distance: route.distance,
+        duration: route.duration,
+        steps: route.legs[0].steps,
+        geometry: route.geometry
+      }));
+      
+      setAvailableRoutes(routes);
+      
+      // Display the first route by default
+      const route = routes[0];
+      
+      if (!route.geometry || !route.geometry.coordinates) {
+        console.warn('Route has no coordinates');
+        return;
+      }
+      
+      const coordinates = route.geometry.coordinates;
 
-        // Update route on the map
-        if (map.current.getSource(ROUTE_SOURCE_ID)) {
-          (map.current.getSource(ROUTE_SOURCE_ID) as mapboxgl.GeoJSONSource).setData({
-            type: 'Feature',
-            properties: {},
-            geometry: {
-              type: 'LineString',
-              coordinates
-            }
-          });
-        }
+      // Update route on the map
+      if (map.current.getSource(ROUTE_SOURCE_ID)) {
+        (map.current.getSource(ROUTE_SOURCE_ID) as mapboxgl.GeoJSONSource).setData({
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates
+          }
+        });
+      }
 
-        // Fit map to route bounds if coordinates exist and are valid
-        if (coordinates && Array.isArray(coordinates) && coordinates.length > 0) {
-          try {
-            // Create bounds object more safely
-            const bounds = new mapboxgl.LngLatBounds();
-            
-            // Add each coordinate to the bounds
-            coordinates.forEach((coord: [number, number]) => {
-              if (Array.isArray(coord) && coord.length >= 2) {
-                bounds.extend(coord);
-              }
-            });
-            
-            // Only fit bounds if we've added coordinates
-            if (!bounds.isEmpty()) {
-              map.current.fitBounds(bounds, {
-                padding: 50,
-                duration: 1000
-              });
-            }
-          } catch (error) {
-            console.warn('Error creating bounds for route:', error);
+      // Only try to fit bounds if we have valid coordinates
+      if (coordinates && coordinates.length > 0) {
+        const bounds = new mapboxgl.LngLatBounds();
+        
+        // Add valid coordinates to bounds
+        for (const coord of coordinates) {
+          if (coord && coord.length >= 2) {
+            bounds.extend([coord[0], coord[1]]);
           }
         }
-
-        // Return the current route info and the total number of routes
-        return {
-          distance: route.distance,
-          duration: route.duration,
-          steps: route.legs[0].steps,
-          routeOptions: routes.length,
-          currentRouteIndex: 0
-        };
+        
+        if (!bounds.isEmpty()) {
+          map.current.fitBounds(bounds, {
+            padding: 50,
+            duration: 1000
+          });
+        }
       }
+
+      // Return the current route info and the total number of routes
+      return {
+        distance: route.distance,
+        duration: route.duration,
+        steps: route.legs[0].steps,
+        routeOptions: routes.length,
+        currentRouteIndex: 0
+      };
     } catch (error) {
       console.error('Error fetching route:', error);
     }
@@ -409,6 +412,12 @@ export const Map = () => {
       setCurrentRouteIndex(routeIndex);
       
       const selectedRoute = availableRoutes[routeIndex];
+      
+      if (!selectedRoute.geometry || !selectedRoute.geometry.coordinates) {
+        console.warn('Selected route has no coordinates');
+        return undefined;
+      }
+      
       const coordinates = selectedRoute.geometry.coordinates;
       
       // Update the route on the map
@@ -423,28 +432,22 @@ export const Map = () => {
         });
       }
       
-      // Fit map to the new route bounds if coordinates exist and are valid
-      if (coordinates && Array.isArray(coordinates) && coordinates.length > 0) {
-        try {
-          // Create bounds object more safely
-          const bounds = new mapboxgl.LngLatBounds();
-          
-          // Add each coordinate to the bounds
-          coordinates.forEach((coord: [number, number]) => {
-            if (Array.isArray(coord) && coord.length >= 2) {
-              bounds.extend(coord);
-            }
-          });
-          
-          // Only fit bounds if we've added coordinates
-          if (!bounds.isEmpty()) {
-            map.current.fitBounds(bounds, {
-              padding: { top: 50, bottom: 50, left: activePanel === 'directions' ? 350 : 50, right: 50 },
-              duration: 1000
-            });
+      // Only try to fit bounds if we have valid coordinates
+      if (coordinates && coordinates.length > 0) {
+        const bounds = new mapboxgl.LngLatBounds();
+        
+        // Add valid coordinates to bounds
+        for (const coord of coordinates) {
+          if (coord && coord.length >= 2) {
+            bounds.extend([coord[0], coord[1]]);
           }
-        } catch (error) {
-          console.warn('Error creating bounds for route change:', error);
+        }
+        
+        if (!bounds.isEmpty()) {
+          map.current.fitBounds(bounds, {
+            padding: { top: 50, bottom: 50, left: activePanel === 'directions' ? 350 : 50, right: 50 },
+            duration: 1000
+          });
         }
       }
       
@@ -531,27 +534,21 @@ export const Map = () => {
                 
                 if (Array.isArray(coordinates) && coordinates.length > 0) {
                   // Create bounds that fit all route coordinates
-                  try {
-                    // Create bounds object more safely
-                    const bounds = new mapboxgl.LngLatBounds();
-                    
-                    // Add each coordinate to the bounds
-                    coordinates.forEach((coord: [number, number]) => {
-                      if (Array.isArray(coord) && coord.length >= 2) {
-                        bounds.extend(coord);
-                      }
-                    });
-                    
-                    // Only fit bounds if we've added coordinates
-                    if (!bounds.isEmpty()) {
-                      // Fit to bounds with a slight delay to ensure UI has settled
-                      map.current.fitBounds(bounds, {
-                        padding: { top: 50, bottom: 50, left: 350, right: 50 }, // Extra padding on left for panel
-                        duration: 500
-                      });
+                  const bounds = new mapboxgl.LngLatBounds();
+                  
+                  // Add valid coordinates to bounds
+                  for (const coord of coordinates) {
+                    if (coord && coord.length >= 2) {
+                      bounds.extend([coord[0], coord[1]]);
                     }
-                  } catch (error) {
-                    console.warn('Error creating bounds during resize:', error);
+                  }
+                  
+                  if (!bounds.isEmpty()) {
+                    // Fit to bounds with a slight delay to ensure UI has settled
+                    map.current.fitBounds(bounds, {
+                      padding: { top: 50, bottom: 50, left: 350, right: 50 }, // Extra padding on left for panel
+                      duration: 500
+                    });
                   }
                 }
               }
