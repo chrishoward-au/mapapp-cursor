@@ -600,9 +600,9 @@ export const Map = () => {
           title={mapStyle === 'map' ? 'Switch to satellite view' : 'Switch to map view'}
         >
           {mapStyle === 'map' ? (
-            <Globe size={20} />
-          ) : (
             <MapIcon size={20} />
+          ) : (
+            <Globe size={20} />
           )}
         </button>
         
