@@ -393,9 +393,21 @@ export const Map = () => {
     });
   };
 
+  // Handle map resize when panel state changes
+  useEffect(() => {
+    if (!map.current || !isMapInitialized) return;
+    
+    // Small delay to ensure transition has completed
+    const resizeTimer = setTimeout(() => {
+      map.current?.resize();
+    }, 300);
+    
+    return () => clearTimeout(resizeTimer);
+  }, [activePanel, isMapInitialized]);
+
   return (
     <div className={styles.wrapper}>
-      <div className={styles.mapWrapper}>
+      <div className={`${styles.mapWrapper} ${activePanel !== 'none' ? styles.withPanel : ''}`}>
         <div ref={mapContainer} className={styles.mapContainer} />
         {isMapInitialized && map.current && (
           <div key={markersKey}>

@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.18] - 2025-03-22
+
+### Changed
+- Improved panel behavior with responsive design:
+  - On desktop and tablet devices (>768px), panels now resize the map area instead of overlaying it
+  - On mobile devices, panels continue to slide over the map to maximize screen real estate
+  - Added smooth transitions for panel open/close animations
+  - Automatically resize map when panels open/close to ensure proper rendering
+
 ## [0.3.17] - 2025-03-22
 
 ### Added

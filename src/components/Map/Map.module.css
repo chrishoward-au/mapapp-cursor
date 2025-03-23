@@ -11,6 +11,15 @@
   position: relative;
   flex: 1;
   min-height: 0;
+  display: flex; /* Add this for desktop panel layout */
+  transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth transition when panel opens/closes */
+}
+
+/* Desktop behavior - map resizes when panel is open */
+@media (min-width: 769px) {
+  .mapWrapper.withPanel {
+    padding-left: 300px; /* Same as panel width */
+  }
 }
 
 .mapContainer {
@@ -142,6 +151,11 @@
 
 /* Responsive styles */
 @media (max-width: 768px) {
+  /* Mobile - panel slides over map */
+  .mapWrapper.withPanel {
+    padding-left: 0;
+  }
+  
   .actionButton {
     padding: 8px;
     font-size: 12px;
