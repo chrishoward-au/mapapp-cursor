@@ -246,7 +246,6 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
                 <button 
                   className={styles.routeNavButton}
                   onClick={() => handleRouteOptionChange(currentRouteIndex - 1)}
-                  disabled={currentRouteIndex === 0}
                   aria-label="Previous route option"
                 >
                   <ChevronLeft size={16} />
@@ -264,7 +263,6 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
                 <button 
                   className={styles.routeNavButton}
                   onClick={() => handleRouteOptionChange(currentRouteIndex + 1)}
-                  disabled={currentRouteIndex === availableRoutes - 1}
                   aria-label="Next route option"
                 >
                   <ChevronRight size={16} />
