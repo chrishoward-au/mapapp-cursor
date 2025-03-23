@@ -362,16 +362,18 @@ export const Map = () => {
           });
         }
 
-        // Fit map to route bounds
-        const bounds = coordinates.reduce(
-          (bounds: mapboxgl.LngLatBounds, coord: [number, number]) => bounds.extend(coord),
-          new mapboxgl.LngLatBounds(coordinates[0] as [number, number], coordinates[0] as [number, number])
-        );
+        // Fit map to route bounds if coordinates exist
+        if (coordinates && coordinates.length > 0) {
+          const bounds = coordinates.reduce(
+            (bounds: mapboxgl.LngLatBounds, coord: [number, number]) => bounds.extend(coord),
+            new mapboxgl.LngLatBounds(coordinates[0] as [number, number], coordinates[0] as [number, number])
+          );
 
-        map.current.fitBounds(bounds, {
-          padding: 50,
-          duration: 1000
-        });
+          map.current.fitBounds(bounds, {
+            padding: 50,
+            duration: 1000
+          });
+        }
 
         // Return the current route info and the total number of routes
         return {
@@ -409,16 +411,18 @@ export const Map = () => {
         });
       }
       
-      // Fit map to the new route bounds
-      const bounds = coordinates.reduce(
-        (bounds: mapboxgl.LngLatBounds, coord: [number, number]) => bounds.extend(coord),
-        new mapboxgl.LngLatBounds(coordinates[0] as [number, number], coordinates[0] as [number, number])
-      );
-      
-      map.current.fitBounds(bounds, {
-        padding: { top: 50, bottom: 50, left: activePanel === 'directions' ? 350 : 50, right: 50 },
-        duration: 1000
-      });
+      // Fit map to the new route bounds if coordinates exist
+      if (coordinates && coordinates.length > 0) {
+        const bounds = coordinates.reduce(
+          (bounds: mapboxgl.LngLatBounds, coord: [number, number]) => bounds.extend(coord),
+          new mapboxgl.LngLatBounds(coordinates[0] as [number, number], coordinates[0] as [number, number])
+        );
+        
+        map.current.fitBounds(bounds, {
+          padding: { top: 50, bottom: 50, left: activePanel === 'directions' ? 350 : 50, right: 50 },
+          duration: 1000
+        });
+      }
       
       // Return the updated route info
       return {
