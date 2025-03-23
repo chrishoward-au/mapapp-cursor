@@ -388,8 +388,8 @@ export const Map = () => {
   };
 
   // Handle changing to a different route option
-  const handleRouteChange = (routeIndex: number) => {
-    if (!map.current || routeIndex < 0 || routeIndex >= availableRoutes.length) return;
+  const handleRouteChange = async (routeIndex: number): Promise<RouteInfo | undefined> => {
+    if (!map.current || routeIndex < 0 || routeIndex >= availableRoutes.length) return undefined;
     
     try {
       setCurrentRouteIndex(routeIndex);
@@ -430,6 +430,7 @@ export const Map = () => {
       };
     } catch (error) {
       console.error('Error changing route:', error);
+      return undefined;
     }
   };
 

@@ -72,6 +72,13 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
     }
   }, [startLocation, endLocation, directionType]);
 
+  // Update route info when currentRouteIndex changes
+  useEffect(() => {
+    if (availableRoutes > 0 && startLocation && endLocation) {
+      handleRouteOptionChange(currentRouteIndex);
+    }
+  }, [currentRouteIndex, availableRoutes]);
+
   const handleCalculateRoute = async () => {
     if (!startLocation || !endLocation) return;
     
