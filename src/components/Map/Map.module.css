@@ -11,14 +11,13 @@
   position: relative;
   flex: 1;
   min-height: 0;
-  display: flex; /* Add this for desktop panel layout */
-  transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth transition when panel opens/closes */
+  transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth transition when panel opens/closes */
 }
 
 /* Desktop behavior - map resizes when panel is open */
 @media (min-width: 769px) {
   .mapWrapper.withPanel {
-    padding-left: 300px; /* Same as panel width */
+    margin-left: 300px; /* Same as panel width */
   }
 }
 
@@ -123,7 +122,7 @@
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   height: 100%;
   overflow-y: auto;
-  position: absolute;
+  position: fixed; /* Changed from absolute to fixed for better positioning */
   top: 0;
   left: 0;
   width: 300px;
@@ -153,7 +152,7 @@
 @media (max-width: 768px) {
   /* Mobile - panel slides over map */
   .mapWrapper.withPanel {
-    padding-left: 0;
+    margin-left: 0;
   }
   
   .actionButton {

@@ -397,13 +397,52 @@ export const Map = () => {
   useEffect(() => {
     if (!map.current || !isMapInitialized) return;
     
-    // Small delay to ensure transition has completed
+    // Resize immediately and then again after transition completes
+    map.current.resize();
+    
     const resizeTimer = setTimeout(() => {
-      map.current?.resize();
-    }, 300);
+      if (map.current) {
+        map.current.resize();
+        
+        // For routes, ensure they remain visible after resize
+        if (activePanel === 'directions' && routeStartLocation && routeEndLocation) {
+          try {
+            // Get current route coordinates
+            const source = map.current.getSource(ROUTE_SOURCE_ID);
+            if (source && 'getGeoJSON' in source) {
+              const geojson = (source as any).getGeoJSON();
+              if (geojson && 
+                  typeof geojson === 'object' && 
+                  'geometry' in geojson && 
+                  geojson.geometry && 
+                  'coordinates' in geojson.geometry) {
+                
+                const coordinates = geojson.geometry.coordinates;
+                
+                if (Array.isArray(coordinates) && coordinates.length > 0) {
+                  // Create bounds that fit all route coordinates
+                  const bounds = coordinates.reduce(
+                    (bounds: mapboxgl.LngLatBounds, coord: [number, number]) => bounds.extend(coord),
+                    new mapboxgl.LngLatBounds(coordinates[0] as [number, number], coordinates[0] as [number, number])
+                  );
+                  
+                  // Fit to bounds with a slight delay to ensure UI has settled
+                  map.current.fitBounds(bounds, {
+                    padding: { top: 50, bottom: 50, left: 350, right: 50 }, // Extra padding on left for panel
+                    duration: 500
+                  });
+                }
+              }
+            }
+          } catch (error) {
+            console.warn('Error adjusting route view after resize:', error);
+          }
+        }
+      }
+    }, 350);
     
     return () => clearTimeout(resizeTimer);
-  }, [activePanel, isMapInitialized]);
+  }, [activePanel, isMapInitialized, routeStartLocation, routeEndLocation]);
 
   return (
     <div className={styles.wrapper}>

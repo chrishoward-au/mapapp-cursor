@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.19] - 2025-03-22
+
+### Fixed
+- Fixed issue with panel behavior on desktop - now properly resizes the map area instead of sliding over it
+- Improved map resize handling to maintain proper route visibility
+- Added extra padding when viewing routes to account for the panel space
+- Fixed positioning issues with the panel that prevented proper desktop layout
+
 ## [0.3.18] - 2025-03-22
 
 ### Changed
