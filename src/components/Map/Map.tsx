@@ -36,9 +36,9 @@ const DEFAULT_ZOOM = 12;
 
 // Map different route colors based on direction type
 const ROUTE_COLORS = {
-  walking: '#4264fb', // blue
-  cycling: '#10b981', // green
-  driving: '#f59e0b'  // amber
+  walking: '#25a244', // green
+  cycling: '#e83e8c', // magenta
+  driving: '#3b82f6'  // blue
 };
 
 // Interface for storing multiple routes
