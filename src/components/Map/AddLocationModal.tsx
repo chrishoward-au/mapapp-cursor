@@ -69,6 +69,7 @@ export const AddLocationModal: React.FC<AddLocationModalProps> = ({
               placeholder="Enter a name for this location"
               className={styles.input}
               required
+              autoComplete="off"
             />
           </div>
           
