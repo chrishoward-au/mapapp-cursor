@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.21] - 2025-03-23
+
+### Fixed
+- Fixed TypeScript errors related to unused variables and imports
+- Added missing `getUserPreferences` function to storage service
+- Added `isDarkMode` property to the ThemeContext
+- Fixed inconsistent map style references ('map' and 'satellite')
+- Improved code organization with modular components
+- Created dedicated components for Route management, Location management, and Map controls
+
 ## [0.3.20] - 2025-03-22
 
 ### Added
