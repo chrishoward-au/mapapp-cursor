@@ -57,15 +57,19 @@
 - [ ] Create contribution guidelines
 
 ## Current Focus
-- Fix route toggle errors
-- Complete multiple route options implementation
-- Improve location management features
+- Implement location search/filter
+- Add route persistence
+- Set up OpenWeatherMap API integration
+- Create weather overlay component
 
 ## Recently Completed
+- Fixed TypeScript errors and improved code organization
+- Added missing user preferences functionality
+- Fixed map style toggle consistency issues
+- Added isDarkMode property to theme context
 - Added multiple route options with route switcher UI
 - Implemented looping behavior for route navigator
 - Updated route colors for different transport modes
-- Fixed layer toggle icons to show current state
 
 ---
-Last Updated: 2024-03-22 
+Last Updated: 2024-03-23 
