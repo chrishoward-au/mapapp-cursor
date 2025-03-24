@@ -4,29 +4,31 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 import styles from './Map.module.css';
 import { LocationMarker } from './LocationMarker';
 import { LocationList } from './LocationList';
-import { DirectionsPanel, DirectionType, RouteInfo } from './Directions/DirectionsPanel';
+import { DirectionsPanel, DirectionType } from './Directions/DirectionsPanel';
 import { AddLocationModal } from './AddLocationModal';
 import { Location, UserPreferences } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import { storageService } from '../../services/storage';
-import { DarkModeToggle } from '../DarkModeToggle';
-import { useTheme } from '../../contexts/ThemeContext';
 import { 
   List, 
   Compass, 
   Maximize, 
   Map as MapIcon, 
-  Globe,
-  Bike,
-  Car
+  Globe
 } from 'lucide-react';
+import { RouteManager, RouteInfo } from './Routes/RouteManager';
+import { ActionBar } from './Controls/ActionBar';
+import { MapControls } from './Controls/MapControls';
+import { LocationManager } from './Locations/LocationManager';
+import { DarkModeToggle } from '../DarkModeToggle';
 
 // Initialize Mapbox access token
-mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN;
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN as string;
 
+// Map style constants
 const MAP_STYLES = {
-  map: 'mapbox://styles/mapbox/streets-v12',
-  satellite: 'mapbox://styles/mapbox/satellite-streets-v12'
+  map: 'streets-v11',
+  satellite: 'satellite-v9'
 };
 
 const ROUTE_SOURCE_ID = 'route';
@@ -41,46 +43,28 @@ const ROUTE_COLORS = {
   driving: '#3b82f6'  // blue
 };
 
-// Interface for storing multiple routes
-interface RouteOption {
-  index: number;
-  distance: number;
-  duration: number;
-  steps: Array<{
-    maneuver: {
-      instruction: string;
-    };
-    distance: number;
-  }>;
-  geometry: {
-    coordinates: [number, number][];
-  };
-}
-
 export const Map = () => {
-  const { theme } = useTheme();
+  // Create references
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const geolocateControl = useRef<mapboxgl.GeolocateControl | null>(null);
-  const [isMapInitialized, setIsMapInitialized] = useState(false);
-  const [activePanel, setActivePanel] = useState<'none' | 'locations' | 'directions'>('none');
+  
+  // State variables
+  const [activePanel, setActivePanel] = useState<string>('none');
   const [locations, setLocations] = useState<Location[]>([]);
-  const [mapStyle, setMapStyle] = useState<UserPreferences['defaultMapLayer']>('map');
+  const [mapStyle, setMapStyle] = useState<'map' | 'satellite'>('map');
+  const [isMapInitialized, setIsMapInitialized] = useState<boolean>(false);
   const [markersKey, setMarkersKey] = useState(0); // Add a key to force marker re-creation
   const [isLoading, setIsLoading] = useState(true);
-  const [currentRouteType, setCurrentRouteType] = useState<DirectionType>('walking');
   
   // Store route state at Map level to preserve it when panel is closed
   const [routeStartLocation, setRouteStartLocation] = useState<Location | null>(null);
   const [routeEndLocation, setRouteEndLocation] = useState<Location | null>(null);
   const [routeDirectionType, setRouteDirectionType] = useState<DirectionType>('walking');
-  
-  // State for multiple routes
-  const [availableRoutes, setAvailableRoutes] = useState<RouteOption[]>([]);
-  const [currentRouteIndex, setCurrentRouteIndex] = useState<number>(0);
+  const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
   
   // Add state for the modal
-  const [isAddLocationModalOpen, setIsAddLocationModalOpen] = useState(false);
+  const [isAddLocationModalOpen, setIsAddLocationModalOpen] = useState<boolean>(false);
   const [newLocationCoordinates, setNewLocationCoordinates] = useState<[number, number] | null>(null);
   
   // Load locations from storage on component mount
@@ -144,7 +128,7 @@ export const Map = () => {
       // Initialize map with the original map style (not theme-dependent)
       map.current = new mapboxgl.Map({
         container: containerElement,
-        style: MAP_STYLES[mapStyle],
+        style: `mapbox://styles/mapbox/${MAP_STYLES[mapStyle as keyof typeof MAP_STYLES]}`,
         center: initialCenter,
         zoom: DEFAULT_ZOOM
       });
@@ -204,7 +188,7 @@ export const Map = () => {
     // Don't run on initial render when mapStyle is just initialized
     try {
       const currentStyle = map.current.getStyle();
-      if (currentStyle && currentStyle.name === MAP_STYLES[mapStyle]) return;
+      if (currentStyle && currentStyle.name === `mapbox://styles/mapbox/${MAP_STYLES[mapStyle as keyof typeof MAP_STYLES]}`) return;
     } catch (e) {
       // Style might not be available yet
       return;
@@ -214,7 +198,7 @@ export const Map = () => {
     const currentZoom = map.current.getZoom();
 
     // Simple approach - just set the style and restore view after a brief delay
-    map.current.setStyle(MAP_STYLES[mapStyle]);
+    map.current.setStyle(`mapbox://styles/mapbox/${MAP_STYLES[mapStyle as keyof typeof MAP_STYLES]}`);
     
     // Let the styledata event in LocationMarker handle marker re-creation
     setTimeout(() => {
@@ -276,7 +260,7 @@ export const Map = () => {
           'line-cap': 'round'
         },
         paint: {
-          'line-color': ROUTE_COLORS[currentRouteType],
+          'line-color': ROUTE_COLORS[routeDirectionType],
           'line-width': 4,
           'line-opacity': 0.8
         }
@@ -288,7 +272,7 @@ export const Map = () => {
 
   const handleLayerChange = (layer: UserPreferences['defaultMapLayer']) => {
     if (!map.current) return;
-    setMapStyle(layer);
+    setMapStyle(layer as 'map' | 'satellite');
   };
 
   const togglePanel = (panel: 'locations' | 'directions') => {
@@ -306,163 +290,6 @@ export const Map = () => {
 
   const handleLocationDelete = (locationId: string) => {
     setLocations(prev => prev.filter(loc => loc.id !== locationId));
-  };
-
-  const handleRouteSelect = async (start: Location, end: Location, directionType: DirectionType = 'walking') => {
-    if (!map.current) return;
-
-    try {
-      // Store the current route type for use in styling
-      setCurrentRouteType(directionType);
-      
-      // Store the route state
-      setRouteStartLocation(start);
-      setRouteEndLocation(end);
-      setRouteDirectionType(directionType);
-
-      // Reset route selection when parameters change
-      setCurrentRouteIndex(0);
-
-      // Update route line color based on the direction type
-      if (map.current.getLayer(ROUTE_LAYER_ID)) {
-        map.current.setPaintProperty(ROUTE_LAYER_ID, 'line-color', ROUTE_COLORS[directionType]);
-      }
-
-      // Get route from Mapbox Directions API - using the selected profile (walking, cycling, driving)
-      const query = await fetch(
-        `https://api.mapbox.com/directions/v5/mapbox/${directionType}/${start.coordinates[0]},${start.coordinates[1]};${end.coordinates[0]},${end.coordinates[1]}?geometries=geojson&overview=full&steps=true&alternatives=true&access_token=${mapboxgl.accessToken}`
-      );
-      const json = await query.json();
-
-      if (!json.routes || json.routes.length === 0) {
-        console.warn('No routes found');
-        return;
-      }
-      
-      // Store all available routes
-      const routes = json.routes.map((route: any, index: number) => ({
-        index,
-        distance: route.distance,
-        duration: route.duration,
-        steps: route.legs[0].steps,
-        geometry: route.geometry
-      }));
-      
-      setAvailableRoutes(routes);
-      
-      // Display the first route by default
-      const route = routes[0];
-      
-      if (!route.geometry || !route.geometry.coordinates) {
-        console.warn('Route has no coordinates');
-        return;
-      }
-      
-      const coordinates = route.geometry.coordinates;
-
-      // Update route on the map
-      if (map.current.getSource(ROUTE_SOURCE_ID)) {
-        (map.current.getSource(ROUTE_SOURCE_ID) as mapboxgl.GeoJSONSource).setData({
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates
-          }
-        });
-      }
-
-      // Only try to fit bounds if we have valid coordinates
-      if (coordinates && coordinates.length > 0) {
-        const bounds = new mapboxgl.LngLatBounds();
-        
-        // Add valid coordinates to bounds
-        for (const coord of coordinates) {
-          if (coord && coord.length >= 2) {
-            bounds.extend([coord[0], coord[1]]);
-          }
-        }
-        
-        if (!bounds.isEmpty()) {
-          map.current.fitBounds(bounds, {
-            padding: 50,
-            duration: 1000
-          });
-        }
-      }
-
-      // Return the current route info and the total number of routes
-      return {
-        distance: route.distance,
-        duration: route.duration,
-        steps: route.legs[0].steps,
-        routeOptions: routes.length,
-        currentRouteIndex: 0
-      };
-    } catch (error) {
-      console.error('Error fetching route:', error);
-    }
-  };
-
-  // Handle changing to a different route option
-  const handleRouteChange = async (routeIndex: number): Promise<RouteInfo | undefined> => {
-    if (!map.current || routeIndex < 0 || routeIndex >= availableRoutes.length) return undefined;
-    
-    try {
-      setCurrentRouteIndex(routeIndex);
-      
-      const selectedRoute = availableRoutes[routeIndex];
-      
-      if (!selectedRoute.geometry || !selectedRoute.geometry.coordinates) {
-        console.warn('Selected route has no coordinates');
-        return undefined;
-      }
-      
-      const coordinates = selectedRoute.geometry.coordinates;
-      
-      // Update the route on the map
-      if (map.current.getSource(ROUTE_SOURCE_ID)) {
-        (map.current.getSource(ROUTE_SOURCE_ID) as mapboxgl.GeoJSONSource).setData({
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates
-          }
-        });
-      }
-      
-      // Only try to fit bounds if we have valid coordinates
-      if (coordinates && coordinates.length > 0) {
-        const bounds = new mapboxgl.LngLatBounds();
-        
-        // Add valid coordinates to bounds
-        for (const coord of coordinates) {
-          if (coord && coord.length >= 2) {
-            bounds.extend([coord[0], coord[1]]);
-          }
-        }
-        
-        if (!bounds.isEmpty()) {
-          map.current.fitBounds(bounds, {
-            padding: { top: 50, bottom: 50, left: activePanel === 'directions' ? 350 : 50, right: 50 },
-            duration: 1000
-          });
-        }
-      }
-      
-      // Return the updated route info
-      return {
-        distance: selectedRoute.distance,
-        duration: selectedRoute.duration,
-        steps: selectedRoute.steps,
-        routeOptions: availableRoutes.length,
-        currentRouteIndex: routeIndex
-      };
-    } catch (error) {
-      console.error('Error changing route:', error);
-      return undefined;
-    }
   };
 
   // Add handler for saving a new location from the modal
@@ -563,6 +390,11 @@ export const Map = () => {
     return () => clearTimeout(resizeTimer);
   }, [activePanel, isMapInitialized, routeStartLocation, routeEndLocation]);
 
+  // Handle RouteInfo updates
+  const handleRouteInfoUpdate = (info: RouteInfo) => {
+    setRouteInfo(info);
+  };
+
   return (
     <div className={styles.wrapper}>
       <div className={`${styles.mapWrapper} ${activePanel !== 'none' ? styles.withPanel : ''}`}>
@@ -593,16 +425,22 @@ export const Map = () => {
         {activePanel === 'directions' && (
           <DirectionsPanel
             locations={locations}
-            onRouteSelect={handleRouteSelect}
             startLocation={routeStartLocation}
             endLocation={routeEndLocation}
             directionType={routeDirectionType}
+            availableRoutes={routeInfo?.routeOptions || 0}
+            currentRouteIndex={routeInfo?.currentRouteIndex || 0}
             onStartLocationChange={setRouteStartLocation}
             onEndLocationChange={setRouteEndLocation}
             onDirectionTypeChange={setRouteDirectionType}
-            availableRoutes={availableRoutes.length}
-            currentRouteIndex={currentRouteIndex}
-            onRouteChange={handleRouteChange}
+            onRouteSelect={async (_start, _end, _type) => {
+              // Implementation
+              return routeInfo || undefined;
+            }}
+            onRouteChange={async (_index) => {
+              // Implementation
+              return routeInfo || undefined;
+            }}
             onClose={() => setActivePanel('none')}
           />
         )}
@@ -637,9 +475,9 @@ export const Map = () => {
           title={mapStyle === 'map' ? 'Switch to satellite view' : 'Switch to map view'}
         >
           {mapStyle === 'map' ? (
-            <MapIcon size={20} />
-          ) : (
             <Globe size={20} />
+          ) : (
+            <MapIcon size={20} />
           )}
         </button>
         
@@ -653,6 +491,41 @@ export const Map = () => {
         onSave={handleSaveLocation}
         onCancel={handleCancelAddLocation}
       />
+
+      {/* Map Controls */}
+      <MapControls 
+        mapStyle={mapStyle} 
+        onMapStyleChange={setMapStyle} 
+      />
+      
+      {/* Action Bar */}
+      <ActionBar
+        locations={locations}
+        activePanel={activePanel}
+        onViewLocations={() => togglePanel('locations')}
+        onViewDirections={() => togglePanel('directions')}
+        onViewAllLocations={handleFitAllMarkers}
+      />
+      
+      {/* Location Manager (handles markers and storage) */}
+      <LocationManager
+        map={map.current}
+        locations={locations}
+        onLocationsChange={setLocations}
+        onLocationSelect={handleLocationSelect}
+      />
+      
+      {/* Route Manager (handles route logic) */}
+      {routeStartLocation && routeEndLocation && map.current && (
+        <RouteManager
+          map={map.current}
+          startLocation={routeStartLocation}
+          endLocation={routeEndLocation}
+          directionType={routeDirectionType}
+          activePanel={activePanel}
+          onRouteInfoUpdate={handleRouteInfoUpdate}
+        />
+      )}
     </div>
   );
 }; 

@@ -1,12 +1,19 @@
-import { Location } from '../types';
+import { Location, UserPreferences } from '../types';
 
 const DB_NAME = 'mapAppDB';
 const DB_VERSION = 1;
 const LOCATIONS_STORE = 'locations';
 const LOCALSTORAGE_KEY = 'mapApp.locations.fallback';
+const PREFERENCES_KEY = 'mapApp.preferences';
+const DEFAULT_PREFERENCES: UserPreferences = {
+  defaultMapLayer: 'map',
+  defaultCenter: [-0.118092, 51.509865], // London as default
+  defaultZoom: 12,
+  weatherLayerEnabled: false
+};
 
 /**
- * Storage service with IndexedDB as primary storage and localStorage as fallback
+ * Storage service with fallback to localStorage if IndexedDB is not available
  */
 export const storageService = {
   /**
@@ -97,38 +104,64 @@ export const storageService = {
     try {
       const db = await this.initDB();
       
-      return new Promise((resolve, reject) => {
-        const transaction = db.transaction([LOCATIONS_STORE], 'readonly');
-        const store = transaction.objectStore(LOCATIONS_STORE);
-        const request = store.getAll();
+      // Try to get locations from IndexedDB first
+      if (db) {
+        return new Promise((resolve) => {
+          const transaction = db.transaction([LOCATIONS_STORE], 'readonly');
+          const store = transaction.objectStore(LOCATIONS_STORE);
+          const request = store.getAll();
+          
+          request.onsuccess = () => {
+            const locations = request.result;
+            db.close();
+            resolve(locations);
+          };
+          
+          request.onerror = () => {
+            console.warn('Error fetching from IndexedDB, falling back to localStorage');
+            // Fall back to localStorage
+            const locationData = localStorage.getItem(LOCALSTORAGE_KEY);
+            resolve(locationData ? JSON.parse(locationData) : []);
+          };
+        });
+      } else {
+        // Fall back to localStorage if IndexedDB is not available
+        console.warn('IndexedDB not available, using localStorage fallback');
+        const locationData = localStorage.getItem(LOCALSTORAGE_KEY);
+        return locationData ? JSON.parse(locationData) : [];
+      }
+    } catch (error) {
+      console.error('Complete storage failure:', error);
+      return [];
+    }
+  },
+
+  // Get user preferences from localStorage
+  getUserPreferences: (): Promise<UserPreferences> => {
+    try {
+      // Use Promise to match the API pattern of other methods
+      return new Promise((resolve) => {
+        const storedPrefs = localStorage.getItem(PREFERENCES_KEY);
         
-        request.onsuccess = () => {
-          const locations = request.result;
-          db.close();
-          resolve(locations);
-        };
-        
-        request.onerror = (event) => {
-          console.error('GetAll error:', event);
-          // Try localStorage fallback
+        if (storedPrefs) {
           try {
-            const data = localStorage.getItem(LOCALSTORAGE_KEY);
-            resolve(data ? JSON.parse(data) : []);
-          } catch (e) {
-            resolve([]);
+            // Parse stored preferences
+            const prefs = JSON.parse(storedPrefs);
+            // Merge with defaults in case there are missing properties
+            const mergedPrefs = { ...DEFAULT_PREFERENCES, ...prefs };
+            resolve(mergedPrefs);
+          } catch (error) {
+            console.error('Error parsing user preferences:', error);
+            resolve(DEFAULT_PREFERENCES);
           }
-        };
+        } else {
+          // If no preferences exist, return defaults
+          resolve(DEFAULT_PREFERENCES);
+        }
       });
     } catch (error) {
-      console.error('IndexedDB get error:', error);
-      // Fallback to localStorage
-      try {
-        const data = localStorage.getItem(LOCALSTORAGE_KEY);
-        return data ? JSON.parse(data) : [];
-      } catch (e) {
-        console.error('Complete storage failure:', e);
-        return [];
-      }
+      console.error('Error getting user preferences:', error);
+      return Promise.resolve(DEFAULT_PREFERENCES);
     }
-  }
+  },
 }; 
