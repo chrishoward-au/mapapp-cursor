@@ -6,30 +6,15 @@ import { LocationMarker } from './LocationMarker';
 import { LocationList } from './LocationList';
 import { DirectionsPanel, DirectionType } from './Directions/DirectionsPanel';
 import { AddLocationModal } from './AddLocationModal';
-import { Location, UserPreferences } from '../../types';
+import { Location } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import { storageService } from '../../services/storage';
-import { 
-  List, 
-  Compass, 
-  Maximize, 
-  Map as MapIcon, 
-  Globe
-} from 'lucide-react';
 import { RouteManager, RouteInfo } from './Routes/RouteManager';
 import { ActionBar } from './Controls/ActionBar';
-import { MapControls } from './Controls/MapControls';
 import { LocationManager } from './Locations/LocationManager';
-import { DarkModeToggle } from '../DarkModeToggle';
 
 // Initialize Mapbox access token
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN as string;
-
-// Map style constants
-const MAP_STYLES = {
-  map: 'streets-v11',
-  satellite: 'satellite-v9'
-};
 
 const ROUTE_SOURCE_ID = 'route';
 const ROUTE_LAYER_ID = 'route-line';
@@ -52,7 +37,6 @@ export const Map = () => {
   // State variables
   const [activePanel, setActivePanel] = useState<string>('none');
   const [locations, setLocations] = useState<Location[]>([]);
-  const [mapStyle, setMapStyle] = useState<'map' | 'satellite'>('map');
   const [isMapInitialized, setIsMapInitialized] = useState<boolean>(false);
   const [markersKey, setMarkersKey] = useState(0); // Add a key to force marker re-creation
   const [isLoading, setIsLoading] = useState(true);
@@ -128,7 +112,7 @@ export const Map = () => {
       // Initialize map with the original map style (not theme-dependent)
       map.current = new mapboxgl.Map({
         container: containerElement,
-        style: `mapbox://styles/mapbox/${MAP_STYLES[mapStyle as keyof typeof MAP_STYLES]}`,
+        style: 'mapbox://styles/mapbox/streets-v11',
         center: initialCenter,
         zoom: DEFAULT_ZOOM
       });
@@ -184,32 +168,11 @@ export const Map = () => {
   // Handle map style changes
   useEffect(() => {
     if (!map.current || !isMapInitialized) return;
-
-    // Don't run on initial render when mapStyle is just initialized
-    try {
-      const currentStyle = map.current.getStyle();
-      if (currentStyle && currentStyle.name === `mapbox://styles/mapbox/${MAP_STYLES[mapStyle as keyof typeof MAP_STYLES]}`) return;
-    } catch (e) {
-      // Style might not be available yet
-      return;
-    }
     
-    const currentCenter = map.current.getCenter();
-    const currentZoom = map.current.getZoom();
-
-    // Simple approach - just set the style and restore view after a brief delay
-    map.current.setStyle(`mapbox://styles/mapbox/${MAP_STYLES[mapStyle as keyof typeof MAP_STYLES]}`);
+    // The map style changes are now handled by the MapControls component
+    // This effect is kept for potential future enhancements
     
-    // Let the styledata event in LocationMarker handle marker re-creation
-    setTimeout(() => {
-      if (map.current) {
-        map.current.setCenter(currentCenter);
-        map.current.setZoom(currentZoom);
-        addRouteLayer();
-      }
-    }, 150);
-    
-  }, [mapStyle, isMapInitialized]); // Don't react to theme changes for map style
+  }, [isMapInitialized]); // Only depends on isMapInitialized now
 
   // Save locations whenever they change
   useEffect(() => {
@@ -268,11 +231,6 @@ export const Map = () => {
     } catch (e) {
       console.error('Failed to add route layer:', e);
     }
-  };
-
-  const handleLayerChange = (layer: UserPreferences['defaultMapLayer']) => {
-    if (!map.current) return;
-    setMapStyle(layer as 'map' | 'satellite');
   };
 
   const togglePanel = (panel: 'locations' | 'directions') => {
@@ -446,56 +404,12 @@ export const Map = () => {
         )}
       </div>
 
-      <div className={styles.actionBar}>
-        <button
-          className={`${styles.actionButton} ${activePanel === 'locations' ? styles.active : ''}`}
-          onClick={() => togglePanel('locations')}
-        >
-          <List size={20} />
-        </button>
-        <button
-          className={`${styles.actionButton} ${activePanel === 'directions' ? styles.active : ''}`}
-          onClick={() => togglePanel('directions')}
-        >
-          <Compass size={20} />
-        </button>
-        
-        <button
-          className={`${styles.actionButton}`}
-          onClick={handleFitAllMarkers}
-          title="View all locations"
-          disabled={locations.length === 0}
-        >
-          <Maximize size={20} />
-        </button>
-        
-        <button
-          className={`${styles.actionButton}`}
-          onClick={() => handleLayerChange(mapStyle === 'map' ? 'satellite' : 'map')}
-          title={mapStyle === 'map' ? 'Switch to satellite view' : 'Switch to map view'}
-        >
-          {mapStyle === 'map' ? (
-            <Globe size={20} />
-          ) : (
-            <MapIcon size={20} />
-          )}
-        </button>
-        
-        <DarkModeToggle />
-      </div>
-
       {/* Add the modal to the component */}
       <AddLocationModal
         isOpen={isAddLocationModalOpen}
         coordinates={newLocationCoordinates}
         onSave={handleSaveLocation}
         onCancel={handleCancelAddLocation}
-      />
-
-      {/* Map Controls */}
-      <MapControls 
-        mapStyle={mapStyle} 
-        onMapStyleChange={setMapStyle} 
       />
       
       {/* Action Bar */}
