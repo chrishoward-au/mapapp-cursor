@@ -7,7 +7,6 @@ import { DirectionsPanel } from './Directions/DirectionsPanel';
 import { AddLocationModal } from './AddLocationModal';
 import { RouteManager } from './Routes/RouteManager';
 import { ActionBar } from './Controls/ActionBar';
-import { MapControls } from './Controls/MapControls';
 import { useMapContext } from '../../contexts/MapContext';
 import { initializeMap, setupRouteLayer, DEFAULT_LOCATION, MAP_STYLES } from '../../services/mapService';
 
@@ -172,7 +171,6 @@ export const Map = () => {
       
       {/* Controls */}
       <ActionBar />
-      <MapControls />
       
       {/* Route Manager - only render when route is active */}
       {routeStartLocation && routeEndLocation && map && (

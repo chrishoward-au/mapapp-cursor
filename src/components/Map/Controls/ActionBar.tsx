@@ -1,16 +1,31 @@
 import React from 'react';
-import { List, Compass, Maximize } from 'lucide-react';
+import { List, Compass, Maximize, Globe, Map as MapIcon } from 'lucide-react';
 import styles from '../Map.module.css';
 import { DarkModeToggle } from '../../DarkModeToggle';
 import { useMapContext } from '../../../contexts/MapContext';
+import { changeMapStyle } from '../../../services/mapService';
 
 export const ActionBar: React.FC = () => {
   const { 
     activePanel, 
     togglePanel, 
     locations, 
-    fitToAllLocations 
+    fitToAllLocations,
+    map,
+    mapStyle,
+    setMapStyle
   } = useMapContext();
+
+  const handleMapStyleChange = () => {
+    if (!map) return;
+    
+    // Toggle between map styles
+    const newStyle = mapStyle === 'map' ? 'satellite' : 'map';
+    setMapStyle(newStyle);
+    
+    // Update the map style
+    changeMapStyle(map, newStyle === 'map' ? 'streets-v11' : 'satellite-v9');
+  };
 
   return (
     <div className={styles.actionBar}>
@@ -40,6 +55,15 @@ export const ActionBar: React.FC = () => {
         aria-label="View all locations"
       >
         <Maximize size={20} />
+      </button>
+
+      {/* Map Style Toggle Button */}
+      <button
+        className={styles.actionButton}
+        onClick={handleMapStyleChange}
+        aria-label={mapStyle === 'map' ? 'Switch to satellite view' : 'Switch to map view'}
+      >
+        {mapStyle === 'map' ? <Globe size={20} /> : <MapIcon size={20} />}
       </button>
 
       <DarkModeToggle />
