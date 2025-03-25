@@ -1,12 +1,15 @@
 import { Map } from './components/Map/Map';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { MapProvider } from './contexts/MapContext';
 
 function App() {
   return (
     <ThemeProvider>
-      <div className="app">
-        <Map />
-      </div>
+      <MapProvider>
+        <div className="app">
+          <Map />
+        </div>
+      </MapProvider>
     </ThemeProvider>
   );
 }

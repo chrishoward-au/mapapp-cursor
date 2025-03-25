@@ -1,100 +1,53 @@
-import { useEffect, useRef, useState } from 'react';
-import mapboxgl from 'mapbox-gl';
+import { useEffect, useRef } from 'react';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import styles from './Map.module.css';
 import { LocationMarker } from './LocationMarker';
 import { LocationList } from './LocationList';
-import { DirectionsPanel, DirectionType } from './Directions/DirectionsPanel';
+import { DirectionsPanel } from './Directions/DirectionsPanel';
 import { AddLocationModal } from './AddLocationModal';
-import { Location } from '../../types';
-import { v4 as uuidv4 } from 'uuid';
-import { storageService } from '../../services/storage';
-import { RouteManager, RouteInfo } from './Routes/RouteManager';
+import { RouteManager } from './Routes/RouteManager';
 import { ActionBar } from './Controls/ActionBar';
-import { LocationManager } from './Locations/LocationManager';
-
-// Initialize Mapbox access token
-mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_ACCESS_TOKEN as string;
-
-const ROUTE_SOURCE_ID = 'route';
-const ROUTE_LAYER_ID = 'route-line';
-const DEFAULT_LOCATION: [number, number] = [144.9631, -37.8136]; // Melbourne, Australia [lng, lat]
-const DEFAULT_ZOOM = 12;
-
-// Map different route colors based on direction type
-const ROUTE_COLORS = {
-  walking: '#25a244', // green
-  cycling: '#e83e8c', // magenta
-  driving: '#3b82f6'  // blue
-};
+import { MapControls } from './Controls/MapControls';
+import { useMapContext } from '../../contexts/MapContext';
+import { initializeMap, setupRouteLayer, DEFAULT_LOCATION, MAP_STYLES } from '../../services/mapService';
 
 export const Map = () => {
-  // Create references
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const geolocateControl = useRef<mapboxgl.GeolocateControl | null>(null);
-  
-  // State variables
-  const [activePanel, setActivePanel] = useState<string>('none');
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [isMapInitialized, setIsMapInitialized] = useState<boolean>(false);
-  const [markersKey, setMarkersKey] = useState(0); // Add a key to force marker re-creation
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Store route state at Map level to preserve it when panel is closed
-  const [routeStartLocation, setRouteStartLocation] = useState<Location | null>(null);
-  const [routeEndLocation, setRouteEndLocation] = useState<Location | null>(null);
-  const [routeDirectionType, setRouteDirectionType] = useState<DirectionType>('walking');
-  const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
-  
-  // Add state for the modal
-  const [isAddLocationModalOpen, setIsAddLocationModalOpen] = useState<boolean>(false);
-  const [newLocationCoordinates, setNewLocationCoordinates] = useState<[number, number] | null>(null);
-  
-  // Load locations from storage on component mount
-  useEffect(() => {
-    const loadLocations = async () => {
-      try {
-        setIsLoading(true);
-        const storedLocations = await storageService.getLocations();
-        setLocations(storedLocations);
-      } catch (error) {
-        console.error('Failed to load locations:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Get shared state and methods from context
+  const {
+    // Map state
+    map,
+    setMap,
+    isMapInitialized,
+    setIsMapInitialized,
+    mapStyle,
     
-    loadLocations();
-  }, []);
+    // Panel state
+    activePanel,
+    
+    // Location state
+    locations,
+    
+    // Modal state
+    isAddLocationModalOpen,
+    newLocationCoordinates,
+    openAddLocationModal,
+    closeAddLocationModal,
+    addLocation,
+    
+    // Route state
+    routeStartLocation,
+    routeEndLocation,
+    routeDirectionType,
+    
+    // Methods
+    selectLocation,
+    getUserLocation
+  } = useMapContext();
+  
+  // Reference to the map container element
+  const mapContainer = useRef<HTMLDivElement>(null);
 
-  // Get the user's location using browser's geolocation
-  const getUserLocation = (): Promise<[number, number]> => {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error('Geolocation is not supported by your browser'));
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { longitude, latitude } = position.coords;
-          resolve([longitude, latitude]);
-        },
-        (error) => {
-          console.warn('Geolocation error:', error.message);
-          reject(error);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0
-        }
-      );
-    });
-  };
-
-  // Initialize map
+  // Initialize map on component mount
   useEffect(() => {
     const containerElement = mapContainer.current;
     if (!containerElement) return;
@@ -109,50 +62,36 @@ export const Map = () => {
         console.info('Using default location (Melbourne):', DEFAULT_LOCATION);
       }
 
-      // Initialize map with the original map style (not theme-dependent)
-      map.current = new mapboxgl.Map({
-        container: containerElement,
-        style: 'mapbox://styles/mapbox/streets-v11',
-        center: initialCenter,
-        zoom: DEFAULT_ZOOM
-      });
+      // Create and initialize the map
+      const newMap = initializeMap(
+        containerElement,
+        initialCenter,
+        12,
+        MAP_STYLES[mapStyle]
+      );
 
-      // Add navigation controls
-      map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
-      
-      // Create geolocate control with more options and store it in ref
-      geolocateControl.current = new mapboxgl.GeolocateControl({
-        positionOptions: {
-          enableHighAccuracy: true,
-          timeout: 6000
-        },
-        trackUserLocation: true,
-        showUserHeading: true,
-        showAccuracyCircle: true
-      });
-      
-      // Add the geolocate control to the map
-      map.current.addControl(geolocateControl.current, 'top-right');
+      // Store map reference in context
+      setMap(newMap);
 
-      // Wait for map to fully load before setting initialized state
-      map.current.on('load', () => {
-        addRouteLayer();
+      // Set up route layer and map event handlers when the map loads
+      newMap.on('load', () => {
+        setupRouteLayer(newMap, routeDirectionType);
         setIsMapInitialized(true);
-        setMarkersKey(prev => prev + 1);
         
-        // Trigger the geolocate control automatically after map loads
+        // Trigger the geolocation control after map loads
         setTimeout(() => {
-          if (geolocateControl.current) {
-            geolocateControl.current.trigger();
+          // Find the geolocate control using more direct approach
+          const geolocateControl = document.querySelector('.mapboxgl-ctrl-geolocate');
+          if (geolocateControl) {
+            (geolocateControl as HTMLElement).click();
           }
         }, 1000);
       });
 
-      // Replace prompt with modal for adding locations
-      map.current.on('click', (e) => {
+      // Add click handler to open the add location modal
+      newMap.on('click', (e) => {
         const coordinates: [number, number] = [e.lngLat.lng, e.lngLat.lat];
-        setNewLocationCoordinates(coordinates);
-        setIsAddLocationModalOpen(true);
+        openAddLocationModal(coordinates);
       });
     };
 
@@ -160,286 +99,85 @@ export const Map = () => {
 
     // Cleanup on unmount
     return () => {
-      map.current?.remove();
-      setIsMapInitialized(false);
-    };
-  }, []); // Only run once on mount
-
-  // Handle map style changes
-  useEffect(() => {
-    if (!map.current || !isMapInitialized) return;
-    
-    // The map style changes are now handled by the MapControls component
-    // This effect is kept for potential future enhancements
-    
-  }, [isMapInitialized]); // Only depends on isMapInitialized now
-
-  // Save locations whenever they change
-  useEffect(() => {
-    if (isLoading) return; // Don't save during initial load
-    
-    const saveLocationsToStorage = async () => {
-      try {
-        await storageService.saveLocations(locations);
-      } catch (error) {
-        console.error('Failed to save locations:', error);
+      if (map) {
+        map.remove();
+        setMap(null as any); // TypeScript fix
+        setIsMapInitialized(false);
       }
     };
-    
-    saveLocationsToStorage();
-  }, [locations, isLoading]);
-
-  const addRouteLayer = () => {
-    if (!map.current) return;
-
-    // Check if source already exists and remove it
-    if (map.current.getSource(ROUTE_SOURCE_ID)) {
-      if (map.current.getLayer(ROUTE_LAYER_ID)) {
-        map.current.removeLayer(ROUTE_LAYER_ID);
-      }
-      map.current.removeSource(ROUTE_SOURCE_ID);
-    }
-
-    // Add route source and layer
-    try {
-      map.current.addSource(ROUTE_SOURCE_ID, {
-        type: 'geojson',
-        data: {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: []
-          }
-        }
-      });
-
-      map.current.addLayer({
-        id: ROUTE_LAYER_ID,
-        type: 'line',
-        source: ROUTE_SOURCE_ID,
-        layout: {
-          'line-join': 'round',
-          'line-cap': 'round'
-        },
-        paint: {
-          'line-color': ROUTE_COLORS[routeDirectionType],
-          'line-width': 4,
-          'line-opacity': 0.8
-        }
-      });
-    } catch (e) {
-      console.error('Failed to add route layer:', e);
-    }
-  };
-
-  const togglePanel = (panel: 'locations' | 'directions') => {
-    setActivePanel(current => current === panel ? 'none' : panel);
-  };
-
-  const handleLocationSelect = (location: Location) => {
-    if (map.current) {
-      map.current.flyTo({
-        center: location.coordinates,
-        zoom: 14
-      });
-    }
-  };
-
-  const handleLocationDelete = (locationId: string) => {
-    setLocations(prev => prev.filter(loc => loc.id !== locationId));
-  };
-
-  // Add handler for saving a new location from the modal
-  const handleSaveLocation = (name: string) => {
-    if (newLocationCoordinates) {
-      const newLocation: Location = {
-        id: uuidv4(),
-        name,
-        coordinates: newLocationCoordinates,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-      setLocations(prev => [...prev, newLocation]);
-      setIsAddLocationModalOpen(false);
-      setNewLocationCoordinates(null);
-    }
-  };
-
-  // Add handler for canceling the modal
-  const handleCancelAddLocation = () => {
-    setIsAddLocationModalOpen(false);
-    setNewLocationCoordinates(null);
-  };
-
-  // Add handler for fitting the map to show all markers
-  const handleFitAllMarkers = () => {
-    if (!map.current || locations.length === 0) return;
-    
-    // Create a new bounds object
-    const bounds = new mapboxgl.LngLatBounds();
-    
-    // Extend the bounds to include all marker locations
-    locations.forEach(location => {
-      bounds.extend(location.coordinates as [number, number]);
-    });
-    
-    // Fit the map to the bounds with some padding
-    map.current.fitBounds(bounds, {
-      padding: 50,
-      duration: 1000
-    });
-  };
+  }, []); // Only run on mount
 
   // Handle map resize when panel state changes
   useEffect(() => {
-    if (!map.current || !isMapInitialized) return;
+    if (!map || !isMapInitialized) return;
     
-    // Resize immediately and then again after transition completes
-    map.current.resize();
+    // Resize map when panel state changes
+    map.resize();
     
+    // Additional resize after animation completes
     const resizeTimer = setTimeout(() => {
-      if (map.current) {
-        map.current.resize();
-        
-        // For routes, ensure they remain visible after resize
-        if (activePanel === 'directions' && routeStartLocation && routeEndLocation) {
-          try {
-            // Get current route coordinates
-            const source = map.current.getSource(ROUTE_SOURCE_ID);
-            if (source && 'getGeoJSON' in source) {
-              const geojson = (source as any).getGeoJSON();
-              if (geojson && 
-                  typeof geojson === 'object' && 
-                  'geometry' in geojson && 
-                  geojson.geometry && 
-                  'coordinates' in geojson.geometry) {
-                
-                const coordinates = geojson.geometry.coordinates;
-                
-                if (Array.isArray(coordinates) && coordinates.length > 0) {
-                  // Create bounds that fit all route coordinates
-                  const bounds = new mapboxgl.LngLatBounds();
-                  
-                  // Add valid coordinates to bounds
-                  for (const coord of coordinates) {
-                    if (coord && coord.length >= 2) {
-                      bounds.extend([coord[0], coord[1]]);
-                    }
-                  }
-                  
-                  if (!bounds.isEmpty()) {
-                    // Fit to bounds with a slight delay to ensure UI has settled
-                    map.current.fitBounds(bounds, {
-                      padding: { top: 50, bottom: 50, left: 350, right: 50 }, // Extra padding on left for panel
-                      duration: 500
-                    });
-                  }
-                }
-              }
-            }
-          } catch (error) {
-            console.warn('Error adjusting route view after resize:', error);
-          }
-        }
+      if (map) {
+        map.resize();
       }
     }, 350);
     
     return () => clearTimeout(resizeTimer);
-  }, [activePanel, isMapInitialized, routeStartLocation, routeEndLocation]);
+  }, [activePanel, isMapInitialized, map]);
 
-  // Handle RouteInfo updates
-  const handleRouteInfoUpdate = (info: RouteInfo) => {
-    setRouteInfo(info);
+  // Handle saving a location from the modal
+  const handleSaveLocation = (name: string) => {
+    if (newLocationCoordinates) {
+      addLocation(name, newLocationCoordinates);
+      closeAddLocationModal();
+    }
   };
 
   return (
     <div className={styles.wrapper}>
       <div className={`${styles.mapWrapper} ${activePanel !== 'none' ? styles.withPanel : ''}`}>
         <div ref={mapContainer} className={styles.mapContainer} />
-        {isMapInitialized && map.current && (
-          <div key={markersKey}>
+        
+        {/* Render location markers when map is ready */}
+        {isMapInitialized && map && (
+          <>
             {locations.map(location => (
               <LocationMarker
                 key={location.id}
-                map={map.current as mapboxgl.Map}
+                map={map}
                 location={location}
-                onClick={handleLocationSelect}
+                onClick={selectLocation}
               />
             ))}
-          </div>
+          </>
         )}
       </div>
 
+      {/* Side panel */}
       <div className={`${styles.panel} ${activePanel === 'none' ? styles.hidden : ''}`}>
         {activePanel === 'locations' && (
-          <LocationList
-            locations={locations}
-            onLocationSelect={handleLocationSelect}
-            onLocationDelete={handleLocationDelete}
-            onClose={() => setActivePanel('none')}
-          />
+          <LocationList />
         )}
         {activePanel === 'directions' && (
-          <DirectionsPanel
-            locations={locations}
-            startLocation={routeStartLocation}
-            endLocation={routeEndLocation}
-            directionType={routeDirectionType}
-            availableRoutes={routeInfo?.routeOptions || 0}
-            currentRouteIndex={routeInfo?.currentRouteIndex || 0}
-            onStartLocationChange={setRouteStartLocation}
-            onEndLocationChange={setRouteEndLocation}
-            onDirectionTypeChange={setRouteDirectionType}
-            onRouteSelect={async (_start, _end, _type) => {
-              // Implementation
-              return routeInfo || undefined;
-            }}
-            onRouteChange={async (_index) => {
-              // Implementation
-              return routeInfo || undefined;
-            }}
-            onClose={() => setActivePanel('none')}
-          />
+          <DirectionsPanel />
         )}
       </div>
 
-      {/* Add the modal to the component */}
+      {/* Add location modal */}
       <AddLocationModal
         isOpen={isAddLocationModalOpen}
         coordinates={newLocationCoordinates}
         onSave={handleSaveLocation}
-        onCancel={handleCancelAddLocation}
+        onCancel={closeAddLocationModal}
       />
       
-      {/* Action Bar */}
-      <ActionBar
-        locations={locations}
-        activePanel={activePanel}
-        onViewLocations={() => togglePanel('locations')}
-        onViewDirections={() => togglePanel('directions')}
-        onViewAllLocations={handleFitAllMarkers}
-      />
+      {/* Controls */}
+      <ActionBar />
+      <MapControls />
       
-      {/* Location Manager (handles markers and storage) */}
-      <LocationManager
-        map={map.current}
-        locations={locations}
-        onLocationsChange={setLocations}
-        onLocationSelect={handleLocationSelect}
-      />
-      
-      {/* Route Manager (handles route logic) */}
-      {routeStartLocation && routeEndLocation && map.current && (
-        <RouteManager
-          map={map.current}
-          startLocation={routeStartLocation}
-          endLocation={routeEndLocation}
-          directionType={routeDirectionType}
-          activePanel={activePanel}
-          onRouteInfoUpdate={handleRouteInfoUpdate}
-        />
+      {/* Route Manager - only render when route is active */}
+      {routeStartLocation && routeEndLocation && map && (
+        <RouteManager />
       )}
     </div>
   );
-}; 
+};

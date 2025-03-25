@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './AddLocationModal.module.css';
+import { X } from 'lucide-react';
 
 interface AddLocationModalProps {
   isOpen: boolean;
@@ -50,10 +51,7 @@ export const AddLocationModal: React.FC<AddLocationModalProps> = ({
             onClick={onCancel}
             aria-label="Close modal"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
+            <X size={16} />
           </button>
         </div>
 
@@ -101,4 +99,4 @@ export const AddLocationModal: React.FC<AddLocationModalProps> = ({
       </div>
     </div>
   );
-}; 
+};

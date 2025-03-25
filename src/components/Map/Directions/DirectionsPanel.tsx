@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from './DirectionsPanel.module.css';
-import { Location } from '../../../types';
 import { Car, Bike, X, Footprints, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useMapContext } from '../../../contexts/MapContext';
 
 // Define direction types
 export type DirectionType = 'driving' | 'walking' | 'cycling';
@@ -19,106 +19,37 @@ export interface RouteInfo {
   currentRouteIndex?: number;
 }
 
-interface DirectionsPanelProps {
-  locations: Location[];
-  onRouteSelect: (start: Location, end: Location, directionType: DirectionType) => Promise<RouteInfo | undefined>;
-  onRouteChange: (routeIndex: number) => Promise<RouteInfo | undefined>;
-  // New props for controlling route state from parent
-  startLocation: Location | null;
-  endLocation: Location | null;
-  directionType: DirectionType;
-  availableRoutes: number;
-  currentRouteIndex: number;
-  onStartLocationChange: (location: Location | null) => void;
-  onEndLocationChange: (location: Location | null) => void;
-  onDirectionTypeChange: (type: DirectionType) => void;
-  onClose: () => void; // New prop for closing the panel
-}
+export const DirectionsPanel: React.FC = () => {
+  const {
+    locations,
+    togglePanel,
+    routeStartLocation,
+    routeEndLocation,
+    routeDirectionType,
+    routeInfo,
+    setRouteStartLocation,
+    setRouteEndLocation,
+    setRouteDirectionType
+  } = useMapContext();
 
-export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
-  locations,
-  onRouteSelect,
-  onRouteChange,
-  startLocation,
-  endLocation,
-  directionType,
-  availableRoutes,
-  currentRouteIndex,
-  onStartLocationChange,
-  onEndLocationChange,
-  onDirectionTypeChange,
-  onClose
-}) => {
-  const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
   const [prevStartId, setPrevStartId] = useState<string | null>(null);
   const [prevEndId, setPrevEndId] = useState<string | null>(null);
   const [prevDirType, setPrevDirType] = useState<DirectionType | null>(null);
 
-  // Only calculate route when values actually change, not just on panel reopen
+  // Track changing values to determine when to recalculate routes
   useEffect(() => {
-    const startId = startLocation?.id || null;
-    const endId = endLocation?.id || null;
+    const startId = routeStartLocation?.id || null;
+    const endId = routeEndLocation?.id || null;
     
-    // Only trigger calculation if something actually changed
-    if (startLocation && endLocation && 
-        (startId !== prevStartId || endId !== prevEndId || directionType !== prevDirType)) {
-      handleCalculateRoute();
-      // Store current values to compare against for future changes
+    // Update trackers for detecting changes
+    if (startId !== prevStartId || endId !== prevEndId || routeDirectionType !== prevDirType) {
       setPrevStartId(startId);
       setPrevEndId(endId);
-      setPrevDirType(directionType);
-    } else if (!startLocation || !endLocation) {
-      setRouteInfo(null);
+      setPrevDirType(routeDirectionType);
     }
-  }, [startLocation, endLocation, directionType]);
+  }, [routeStartLocation, routeEndLocation, routeDirectionType]);
 
-  // Update route info when currentRouteIndex changes
-  useEffect(() => {
-    if (availableRoutes > 0 && startLocation && endLocation) {
-      handleRouteOptionChange(currentRouteIndex);
-    }
-  }, [currentRouteIndex, availableRoutes]);
-
-  const handleCalculateRoute = async () => {
-    if (!startLocation || !endLocation) return;
-    
-    try {
-      const info = await onRouteSelect(startLocation, endLocation, directionType);
-      if (info) {
-        setRouteInfo(info);
-      }
-    } catch (error) {
-      console.error('Error calculating route:', error);
-    }
-  };
-
-  // Handle changing route options
-  const handleRouteOptionChange = async (index: number) => {
-    if (availableRoutes > 0) {
-      // Implement looping behavior
-      let nextIndex = index;
-      
-      // If going past the last route, loop to the first
-      if (nextIndex >= availableRoutes) {
-        nextIndex = 0;
-      }
-      
-      // If going before the first route, loop to the last
-      if (nextIndex < 0) {
-        nextIndex = availableRoutes - 1;
-      }
-      
-      try {
-        const info = await onRouteChange(nextIndex);
-        if (info) {
-          setRouteInfo(info);
-        }
-      } catch (error) {
-        console.error('Error changing route option:', error);
-      }
-    }
-  };
-
+  // Utility functions for formatting
   const formatDistance = (meters: number): string => {
     return meters >= 1000
       ? `${(meters / 1000).toFixed(1)} km`
@@ -152,7 +83,11 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
     <div className={styles.directionsPanel}>
       <div className={styles.panelHeader}>
         <h3 className={styles.title}>Directions</h3>
-        <button className={styles.closeButton} onClick={onClose} aria-label="Close directions panel">
+        <button 
+          className={styles.closeButton} 
+          onClick={() => togglePanel('directions')} 
+          aria-label="Close directions panel"
+        >
           <X size={16} />
         </button>
       </div>
@@ -161,22 +96,22 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
         <div className={styles.toggleTitle}>Transport mode:</div>
         <div className={styles.toggleButtons}>
           <button 
-            className={`${styles.toggleButton} ${directionType === 'walking' ? styles.active : ''}`}
-            onClick={() => onDirectionTypeChange('walking')}
+            className={`${styles.toggleButton} ${routeDirectionType === 'walking' ? styles.active : ''}`}
+            onClick={() => setRouteDirectionType('walking')}
             title="Walking"
           >
             {getDirectionTypeIcon('walking')}
           </button>
           <button 
-            className={`${styles.toggleButton} ${directionType === 'cycling' ? styles.active : ''}`}
-            onClick={() => onDirectionTypeChange('cycling')}
+            className={`${styles.toggleButton} ${routeDirectionType === 'cycling' ? styles.active : ''}`}
+            onClick={() => setRouteDirectionType('cycling')}
             title="Cycling"
           >
             {getDirectionTypeIcon('cycling')}
           </button>
           <button 
-            className={`${styles.toggleButton} ${directionType === 'driving' ? styles.active : ''}`}
-            onClick={() => onDirectionTypeChange('driving')}
+            className={`${styles.toggleButton} ${routeDirectionType === 'driving' ? styles.active : ''}`}
+            onClick={() => setRouteDirectionType('driving')}
             title="Driving"
           >
             {getDirectionTypeIcon('driving')}
@@ -188,10 +123,10 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
         <label>
           Start:
           <select 
-            value={startLocation?.id || ""} 
+            value={routeStartLocation?.id || ""} 
             onChange={(e) => {
               const selected = locations.find(loc => loc.id === e.target.value);
-              onStartLocationChange(selected || null);
+              setRouteStartLocation(selected || null);
             }}
           >
             <option value="">Select start location</option>
@@ -208,10 +143,10 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
         <label>
           End:
           <select 
-            value={endLocation?.id || ""} 
+            value={routeEndLocation?.id || ""} 
             onChange={(e) => {
               const selected = locations.find(loc => loc.id === e.target.value);
-              onEndLocationChange(selected || null);
+              setRouteEndLocation(selected || null);
             }}
           >
             <option value="">Select end location</option>
@@ -228,7 +163,9 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
         <div className={styles.routeInfo}>
           <div className={styles.summary}>
             <div>
-              <span className={styles.directionTypeText}>{directionType.charAt(0).toUpperCase() + directionType.slice(1)}</span>
+              <span className={styles.directionTypeText}>
+                {routeDirectionType.charAt(0).toUpperCase() + routeDirectionType.slice(1)}
+              </span>
               <span> · </span>
               <span>{formatDistance(routeInfo.distance)}</span>
               <span> · </span>
@@ -237,32 +174,29 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
           </div>
 
           {/* Route alternatives navigator - only show if there are multiple routes */}
-          {availableRoutes > 1 && (
+          {routeInfo.routeOptions && routeInfo.routeOptions > 1 && (
             <div className={styles.routeAlternatives}>
               <div className={styles.routeAlternativesTitle}>
-                Route options ({currentRouteIndex + 1}/{availableRoutes})
+                Route options ({(routeInfo.currentRouteIndex || 0) + 1}/{routeInfo.routeOptions})
               </div>
               <div className={styles.routeNavigator}>
                 <button 
                   className={styles.routeNavButton}
-                  onClick={() => handleRouteOptionChange(currentRouteIndex - 1)}
                   aria-label="Previous route option"
                 >
                   <ChevronLeft size={16} />
                 </button>
                 <div className={styles.routeIndicators}>
-                  {[...Array(availableRoutes)].map((_, index) => (
+                  {[...Array(routeInfo.routeOptions)].map((_, index) => (
                     <button
                       key={index}
-                      className={`${styles.routeDot} ${index === currentRouteIndex ? styles.active : ''}`}
-                      onClick={() => handleRouteOptionChange(index)}
+                      className={`${styles.routeDot} ${index === (routeInfo.currentRouteIndex || 0) ? styles.active : ''}`}
                       aria-label={`Route option ${index + 1}`}
                     />
                   ))}
                 </div>
                 <button 
                   className={styles.routeNavButton}
-                  onClick={() => handleRouteOptionChange(currentRouteIndex + 1)}
                   aria-label="Next route option"
                 >
                   <ChevronRight size={16} />
@@ -286,4 +220,4 @@ export const DirectionsPanel: React.FC<DirectionsPanelProps> = ({
       )}
     </div>
   );
-}; 
+};

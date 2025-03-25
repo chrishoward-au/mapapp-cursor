@@ -1,28 +1,25 @@
-import { Location } from '../../types';
+import { X } from 'lucide-react';
 import styles from './LocationList.module.css';
+import { useMapContext } from '../../contexts/MapContext';
 
-interface LocationListProps {
-  locations: Location[];
-  onLocationSelect: (location: Location) => void;
-  onLocationDelete: (locationId: string) => void;
-  onClose: () => void;
-}
+export const LocationList = () => {
+  const {
+    locations,
+    selectLocation,
+    deleteLocation,
+    togglePanel
+  } = useMapContext();
 
-export const LocationList = ({
-  locations,
-  onLocationSelect,
-  onLocationDelete,
-  onClose,
-}: LocationListProps) => {
   return (
     <div className={styles.locationList}>
       <div className={styles.panelHeader}>
         <h3 className={styles.title}>Saved Locations</h3>
-        <button className={styles.closeButton} onClick={onClose} aria-label="Close locations panel">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
+        <button 
+          className={styles.closeButton} 
+          onClick={() => togglePanel('locations')} 
+          aria-label="Close locations panel"
+        >
+          <X size={16} />
         </button>
       </div>
       
@@ -34,13 +31,13 @@ export const LocationList = ({
             <li key={location.id} className={styles.listItem}>
               <button
                 className={styles.locationButton}
-                onClick={() => onLocationSelect(location)}
+                onClick={() => selectLocation(location)}
               >
                 {location.name}
               </button>
               <button
                 className={styles.deleteButton}
-                onClick={() => onLocationDelete(location.id)}
+                onClick={() => deleteLocation(location.id)}
                 aria-label="Delete location"
               >
                 ×
@@ -51,4 +48,4 @@ export const LocationList = ({
       )}
     </div>
   );
-}; 
+};

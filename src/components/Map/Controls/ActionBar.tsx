@@ -1,30 +1,23 @@
 import React from 'react';
 import { List, Compass, Maximize } from 'lucide-react';
 import styles from '../Map.module.css';
-import { Location } from '../../../types';
 import { DarkModeToggle } from '../../DarkModeToggle';
+import { useMapContext } from '../../../contexts/MapContext';
 
-interface ActionBarProps {
-  locations: Location[];
-  activePanel: string;
-  onViewLocations: () => void;
-  onViewDirections: () => void;
-  onViewAllLocations: () => void;
-}
+export const ActionBar: React.FC = () => {
+  const { 
+    activePanel, 
+    togglePanel, 
+    locations, 
+    fitToAllLocations 
+  } = useMapContext();
 
-export const ActionBar: React.FC<ActionBarProps> = ({
-  locations,
-  activePanel,
-  onViewLocations,
-  onViewDirections,
-  onViewAllLocations
-}) => {
   return (
     <div className={styles.actionBar}>
       {/* Locations List Button */}
       <button
         className={`${styles.actionButton} ${activePanel === 'locations' ? styles.active : ''}`}
-        onClick={onViewLocations}
+        onClick={() => togglePanel('locations')}
         aria-label="View saved locations"
       >
         <List size={20} />
@@ -33,7 +26,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
       {/* Directions Button */}
       <button
         className={`${styles.actionButton} ${activePanel === 'directions' ? styles.active : ''}`}
-        onClick={onViewDirections}
+        onClick={() => togglePanel('directions')}
         aria-label="Get directions"
       >
         <Compass size={20} />
@@ -42,7 +35,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
       {/* View All Locations Button */}
       <button
         className={styles.actionButton}
-        onClick={onViewAllLocations}
+        onClick={fitToAllLocations}
         disabled={locations.length < 2}
         aria-label="View all locations"
       >
@@ -52,4 +45,4 @@ export const ActionBar: React.FC<ActionBarProps> = ({
       <DarkModeToggle />
     </div>
   );
-}; 
+};
