@@ -27,3 +27,7 @@
 - Components belong in `src/components`
 - Use contexts for global state management
 - Follow container/presentation component pattern
+
+## Practices
+- Update project version before each commit
+- Update changelog before each commit
