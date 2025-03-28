@@ -50,6 +50,12 @@ export const Map = () => {
   useEffect(() => {
     const containerElement = mapContainer.current;
     if (!containerElement) return;
+    
+    // Ensure the container is empty before initializing the map
+    // This prevents the warning about map container not being empty
+    while (containerElement.firstChild) {
+      containerElement.removeChild(containerElement.firstChild);
+    }
 
     const initMap = async () => {
       // Try to get user location, default to Melbourne if not available
