@@ -48,7 +48,7 @@ export const Map = () => {
 
   // Initialize map only once on component mount
   useEffect(() => {
-    // Only continue if we don't already have a map and container exists
+    // Only initialize if we don't have a map yet and container exists
     if (map || !mapContainer.current) return;
     
     const containerElement = mapContainer.current;

@@ -47,6 +47,17 @@ export const initializeMap = (
   zoom: number = DEFAULT_ZOOM,
   style: string = 'streets-v11'
 ): mapboxgl.Map => {
+  // Make sure the container is empty before initializing the map
+  // This prevents the warning about container not being empty
+  while (container.firstChild) {
+    container.removeChild(container.firstChild);
+  }
+
+  // Add a temporary div to suppress the warning message
+  const emptyDiv = document.createElement('div');
+  emptyDiv.style.display = 'none';
+  container.appendChild(emptyDiv);
+  
   // Create a new map instance
   const map = new mapboxgl.Map({
     container,
