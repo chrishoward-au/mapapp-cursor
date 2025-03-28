@@ -46,17 +46,13 @@ export const Map = () => {
   // Reference to the map container element
   const mapContainer = useRef<HTMLDivElement>(null);
 
-  // Initialize map on component mount
+  // Initialize map only once on component mount
   useEffect(() => {
-    const containerElement = mapContainer.current;
-    if (!containerElement) return;
+    // Only continue if we don't already have a map and container exists
+    if (map || !mapContainer.current) return;
     
-    // Ensure the container is empty before initializing the map
-    // This prevents the warning about map container not being empty
-    while (containerElement.firstChild) {
-      containerElement.removeChild(containerElement.firstChild);
-    }
-
+    const containerElement = mapContainer.current;
+    
     const initMap = async () => {
       // Try to get user location, default to Melbourne if not available
       let initialCenter: [number, number] = DEFAULT_LOCATION;
@@ -104,13 +100,10 @@ export const Map = () => {
 
     // Cleanup on unmount
     return () => {
-      if (map) {
-        map.remove();
-        setMap(null as any); // TypeScript fix
-        setIsMapInitialized(false);
-      }
+      // Nothing to clean up for this effect
+      // Map cleanup is handled in another effect
     };
-  }, []); // Only run on mount
+  }, [map, mapStyle, getUserLocation, openAddLocationModal]); // Only run when these dependencies are missing or change
 
   // Handle map resize when panel state changes
   useEffect(() => {
@@ -128,6 +121,17 @@ export const Map = () => {
     
     return () => clearTimeout(resizeTimer);
   }, [activePanel, isMapInitialized, map]);
+
+  // Cleanup map on unmount - separate from initialization to avoid conflicts
+  useEffect(() => {
+    return () => {
+      if (map) {
+        map.remove();
+        setMap(null as any); // TypeScript fix
+        setIsMapInitialized(false);
+      }
+    };
+  }, [map, setMap, setIsMapInitialized]);
 
   // Handle saving a location from the modal
   const handleSaveLocation = (name: string) => {
