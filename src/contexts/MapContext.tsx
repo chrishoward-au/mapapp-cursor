@@ -44,6 +44,7 @@ interface MapContextType {
   setRouteEndLocation: (location: Location | null) => void;
   setRouteDirectionType: (type: DirectionType) => void;
   updateRouteInfo: (info: RouteInfo) => void;
+  setCurrentRouteIndex: (index: number) => void;
   
   // Map utilities
   fitToAllLocations: () => void;
@@ -86,6 +87,16 @@ export const MapProvider = ({ children }: MapProviderProps) => {
   const [routeEndLocation, setRouteEndLocation] = useState<Location | null>(null);
   const [routeDirectionType, setRouteDirectionType] = useState<DirectionType>('walking');
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
+  
+  // Handle route index changes
+  const setCurrentRouteIndex = useCallback((index: number) => {
+    if (routeInfo) {
+      setRouteInfo({
+        ...routeInfo,
+        currentRouteIndex: index
+      });
+    }
+  }, [routeInfo]);
   
   // Load locations from storage on mount
   useEffect(() => {
@@ -247,6 +258,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
         setRouteEndLocation,
         setRouteDirectionType,
         updateRouteInfo,
+        setCurrentRouteIndex,
         
         // Map utilities
         fitToAllLocations,

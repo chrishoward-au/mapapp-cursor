@@ -18,9 +18,9 @@ export const DEFAULT_ZOOM = 12;
 
 // Map different route colors based on direction type
 export const ROUTE_COLORS = {
-  walking: '#25a244', // green
-  cycling: '#e83e8c', // magenta
-  driving: '#3b82f6'  // blue
+  walking: '#15a451', // greenish
+  cycling: '#8c31b1', // purplish
+  driving: '#1e7fbf'  // blueish
 };
 
 export interface RouteOption {

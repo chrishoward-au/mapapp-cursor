@@ -29,7 +29,8 @@ export const DirectionsPanel: React.FC = () => {
     routeInfo,
     setRouteStartLocation,
     setRouteEndLocation,
-    setRouteDirectionType
+    setRouteDirectionType,
+    setCurrentRouteIndex
   } = useMapContext();
 
   const [prevStartId, setPrevStartId] = useState<string | null>(null);
@@ -183,21 +184,32 @@ export const DirectionsPanel: React.FC = () => {
                 <button 
                   className={styles.routeNavButton}
                   aria-label="Previous route option"
+                  onClick={() => {
+                    if (!routeInfo || routeInfo.currentRouteIndex === undefined || routeInfo.routeOptions === undefined) return;
+                    const prevIndex = (routeInfo.currentRouteIndex - 1 + routeInfo.routeOptions) % routeInfo.routeOptions;
+                    setCurrentRouteIndex(prevIndex);
+                  }}
                 >
                   <ChevronLeft size={16} />
                 </button>
                 <div className={styles.routeIndicators}>
-                  {[...Array(routeInfo.routeOptions)].map((_, index) => (
+                  {routeInfo.routeOptions && [...Array(routeInfo.routeOptions)].map((_, index) => (
                     <button
                       key={index}
                       className={`${styles.routeDot} ${index === (routeInfo.currentRouteIndex || 0) ? styles.active : ''}`}
                       aria-label={`Route option ${index + 1}`}
+                      onClick={() => setCurrentRouteIndex(index)}
                     />
                   ))}
                 </div>
                 <button 
                   className={styles.routeNavButton}
                   aria-label="Next route option"
+                  onClick={() => {
+                    if (!routeInfo || routeInfo.currentRouteIndex === undefined || routeInfo.routeOptions === undefined) return;
+                    const nextIndex = (routeInfo.currentRouteIndex + 1) % routeInfo.routeOptions;
+                    setCurrentRouteIndex(nextIndex);
+                  }}
                 >
                   <ChevronRight size={16} />
                 </button>
