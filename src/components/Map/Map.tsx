@@ -46,12 +46,24 @@ export const Map = () => {
   // Reference to the map container element
   const mapContainer = useRef<HTMLDivElement>(null);
 
-  // Initialize map only once on component mount
+  // Initialize map only once on component mount with a different approach
   useEffect(() => {
     // Only initialize if we don't have a map yet and container exists
     if (map || !mapContainer.current) return;
     
-    const containerElement = mapContainer.current;
+    // Important: Use getElementById instead of the ref to ensure we get a fresh element
+    // This bypasses React's reconciliation which might be causing issues
+    const mapboxContainer = document.getElementById('mapbox-container');
+    
+    if (!mapboxContainer) {
+      console.error('Map container not found');
+      return;
+    }
+    
+    // Ensure the container is absolutely empty
+    while (mapboxContainer.firstChild) {
+      mapboxContainer.removeChild(mapboxContainer.firstChild);
+    }
     
     const initMap = async () => {
       // Try to get user location, default to Melbourne if not available
@@ -62,10 +74,11 @@ export const Map = () => {
       } catch (error) {
         console.info('Using default location (Melbourne):', DEFAULT_LOCATION);
       }
-
+      
       // Create and initialize the map
+      // Important: Use mapboxContainer rather than containerElement to avoid React interference
       const newMap = initializeMap(
-        containerElement,
+        mapboxContainer,
         initialCenter,
         12,
         MAP_STYLES[mapStyle]
@@ -144,21 +157,26 @@ export const Map = () => {
   return (
     <div className={styles.wrapper}>
       <div className={`${styles.mapWrapper} ${activePanel !== 'none' ? styles.withPanel : ''}`}>
-        <div ref={mapContainer} className={styles.mapContainer} />
+        {/* 
+          The key insight: Map container must be completely isolated 
+          from React's rendering cycle
+        */}
+        <div id="mapbox-container" ref={mapContainer} className={styles.mapContainer} />
         
-        {/* Render location markers when map is ready */}
-        {isMapInitialized && map && (
-          <>
-            {locations.map(location => (
+        {/* Rendering overlays separate from the map container */}
+        <div className={styles.overlayContainer}>
+          {/* Render location markers when map is ready */}
+          {isMapInitialized && map && (
+            locations.map(location => (
               <LocationMarker
                 key={location.id}
                 map={map}
                 location={location}
                 onClick={selectLocation}
               />
-            ))}
-          </>
-        )}
+            ))
+          )}
+        </div>
       </div>
 
       {/* Side panel */}

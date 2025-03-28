@@ -14,41 +14,66 @@ export const LocationMarker = ({ map, location, onClick }: LocationMarkerProps) 
   // Create marker function - extracted to avoid duplication
   const createMarker = useCallback(() => {
     try {
-      // Make sure the map is valid and loaded before working with it
-      if (!map || !map.getContainer()) return;
-    
-      // Remove previous marker if it exists
-      if (markerRef.current) {
-        markerRef.current.remove();
-      }
-  
-      // Create new marker
-      const marker = new mapboxgl.Marker({ 
-        color: '#4264fb',
-        scale: 0.7 // Make markers smaller (default is 1)
-      })
-        .setLngLat(location.coordinates);
+      // Exit early if map isn't available
+      if (!map) return;
       
-      // Only add to map if the map is ready
-      if (map.loaded()) {
-        marker.addTo(map);
-      } else {
-        // If map isn't ready, wait for it to load
-        map.once('load', () => marker.addTo(map));
-      }
-  
-      // Add click handler if onClick is provided
-      if (onClick) {
-        const el = marker.getElement();
-        el.addEventListener('click', () => {
-          onClick(location);
-        });
-      }
-  
-      // Store marker reference
-      markerRef.current = marker;
+      // Wait until next tick - this ensures the DOM is ready
+      setTimeout(() => {
+        try {
+          // Double-check map validity after timeout
+          if (!map || !map.getContainer()) return;
+        
+          // Remove previous marker if it exists
+          if (markerRef.current) {
+            markerRef.current.remove();
+          }
+      
+          // Create new marker
+          const marker = new mapboxgl.Marker({ 
+            color: '#4264fb',
+            scale: 0.7 // Make markers smaller (default is 1)
+          })
+            .setLngLat(location.coordinates);
+          
+          // Add to map with a safety check
+          const addMarkerToMap = () => {
+            if (map && marker) {
+              try {
+                marker.addTo(map);
+              } catch (e) {
+                console.warn('Error adding marker to map:', e);
+              }
+            }
+          };
+          
+          // Wait for map to be ready
+          if (map.loaded()) {
+            addMarkerToMap();
+          } else {
+            map.once('load', addMarkerToMap);
+          }
+      
+          // Add click handler if onClick is provided
+          if (onClick) {
+            const el = marker.getElement();
+            if (el) {
+              el.addEventListener('click', () => {
+                onClick(location);
+              });
+              
+              // Make element receive pointer events
+              el.style.pointerEvents = 'auto';
+            }
+          }
+      
+          // Store marker reference
+          markerRef.current = marker;
+        } catch (err) {
+          console.warn('Error in marker creation timeout:', err);
+        }
+      }, 0);
     } catch (error) {
-      console.warn('Error creating marker:', error);
+      console.warn('Error in marker creation:', error);
     }
   }, [map, location, onClick]);
 
