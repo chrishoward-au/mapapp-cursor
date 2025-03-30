@@ -101,34 +101,6 @@ export const DirectionsPanel: React.FC = () => {
       
       {/* Route inputs container */}
       <div className={styles.routeInputs}>
-        {/* Mode selector as tabs */}
-        <div className={styles.travelModeTabs}>
-          <button 
-            className={`${styles.modeTab} ${routeDirectionType === 'walking' ? styles.active : ''}`}
-            onClick={() => setRouteDirectionType('walking')}
-            title="Walking"
-          >
-            {getDirectionTypeIcon('walking')}
-            <span className={styles.modeLabel}>Walk</span>
-          </button>
-          <button 
-            className={`${styles.modeTab} ${routeDirectionType === 'cycling' ? styles.active : ''}`}
-            onClick={() => setRouteDirectionType('cycling')}
-            title="Cycling"
-          >
-            {getDirectionTypeIcon('cycling')}
-            <span className={styles.modeLabel}>Bike</span>
-          </button>
-          <button 
-            className={`${styles.modeTab} ${routeDirectionType === 'driving' ? styles.active : ''}`}
-            onClick={() => setRouteDirectionType('driving')}
-            title="Driving"
-          >
-            {getDirectionTypeIcon('driving')}
-            <span className={styles.modeLabel}>Drive</span>
-          </button>
-        </div>
-        
         {/* Location selectors with improved layout */}
         <div className={styles.locationSelectors}>
           <div className={styles.locationInputGroup}>
@@ -175,6 +147,34 @@ export const DirectionsPanel: React.FC = () => {
             </select>
           </div>
         </div>
+        
+        {/* Mode selector as compact toggle buttons */}
+        <div className={styles.travelModeTabs}>
+          <button 
+            className={`${styles.modeTab} ${routeDirectionType === 'walking' ? styles.active : ''}`}
+            onClick={() => setRouteDirectionType('walking')}
+            title="Walking"
+            aria-label="Walking directions"
+          >
+            {getDirectionTypeIcon('walking')}
+          </button>
+          <button 
+            className={`${styles.modeTab} ${routeDirectionType === 'cycling' ? styles.active : ''}`}
+            onClick={() => setRouteDirectionType('cycling')}
+            title="Cycling"
+            aria-label="Cycling directions"
+          >
+            {getDirectionTypeIcon('cycling')}
+          </button>
+          <button 
+            className={`${styles.modeTab} ${routeDirectionType === 'driving' ? styles.active : ''}`}
+            onClick={() => setRouteDirectionType('driving')}
+            title="Driving"
+            aria-label="Driving directions"
+          >
+            {getDirectionTypeIcon('driving')}
+          </button>
+        </div>
       </div>
       
       {/* Route information card */}
@@ -186,8 +186,8 @@ export const DirectionsPanel: React.FC = () => {
               {getDirectionTypeIcon(routeDirectionType, 22)}
             </div>
             <div className={styles.summaryDetails}>
-              <div className={styles.summaryTime}>{formatDuration(routeInfo.duration)}</div>
-              <div className={styles.summaryDistance}>{formatDistance(routeInfo.distance)}</div>
+              <span className={styles.summaryTime}>{formatDuration(routeInfo.duration)}</span>
+              <span className={styles.summaryDistance}>{formatDistance(routeInfo.distance)}</span>
             </div>
           </div>
 
@@ -266,7 +266,7 @@ export const DirectionsPanel: React.FC = () => {
                     <li key={index} className={styles.stepItem}>
                       <div className={styles.stepContent}>
                         <div className={styles.stepInstruction} dangerouslySetInnerHTML={{ __html: step.maneuver.instruction }} />
-                        <div className={styles.stepDistance}>{formatDistance(step.distance)}</div>
+                        <span className={styles.stepDistance}>{formatDistance(step.distance)}</span>
                       </div>
                     </li>
                   ))}
