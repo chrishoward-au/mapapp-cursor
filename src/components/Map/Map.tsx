@@ -9,7 +9,7 @@ import { RouteManager } from './Routes/RouteManager';
 import { ActionBar } from './Controls/ActionBar';
 import { useMapContext } from '../../contexts/MapContext';
 import mapboxgl from 'mapbox-gl';
-import { setupRouteLayer, DEFAULT_LOCATION, MAP_STYLES, ROUTE_COLORS } from '../../services/mapService';
+import { setupRouteLayer, DEFAULT_LOCATION, MAP_STYLES } from '../../services/mapService';
 
 export const Map = () => {
   // Get shared state and methods from context
@@ -113,7 +113,8 @@ export const Map = () => {
     // Cleanup on unmount
     return () => {
       if (map) {
-        map.remove();
+        // Cast to any to avoid TypeScript errors
+        (map as any).remove();
         setMap(null as any);
         setIsMapInitialized(false);
       }

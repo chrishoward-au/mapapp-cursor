@@ -1,13 +1,15 @@
-/* Direction Panel */
+/* Direction Panel - Main Container */
 .directionsPanel {
   background-color: white;
   border-radius: 8px;
-  padding: 16px;
+  padding: 12px;
   margin: 0;
   width: 100%;
   height: 100%;
   overflow-y: auto;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
 }
 
 :global(.dark) .directionsPanel {
@@ -15,16 +17,23 @@
   color: #f1f1f1;
 }
 
+/* Panel Header */
 .panelHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #eaeaea;
+}
+
+:global(.dark) .panelHeader {
+  border-bottom-color: #333;
 }
 
 .title {
   margin: 0;
-  font-size: 1.4rem;
+  font-size: 1.3rem;
   font-weight: 600;
   color: #333;
 }
@@ -60,209 +69,189 @@
   color: #f1f1f1;
 }
 
-/* Direction Type Toggle */
-.directionTypeToggle {
+/* Route Inputs Container */
+.routeInputs {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #eaeaea;
 }
 
-:global(.dark) .directionTypeToggle {
-  border-bottom-color: #333;
+/* Travel Mode Tabs */
+.travelModeTabs {
+  display: flex;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #f5f5f5;
+  border: 1px solid #eaeaea;
+  margin-bottom: 4px;
 }
 
-.toggleTitle {
-  font-size: 0.9rem;
-  font-weight: 500;
-  margin-bottom: 8px;
+:global(.dark) .travelModeTabs {
+  background-color: #2a2a2a;
+  border-color: #444;
+}
+
+.modeTab {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 10px 0;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
   color: #666;
+  transition: all 0.2s ease;
 }
 
-:global(.dark) .toggleTitle {
+.modeTab:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+:global(.dark) .modeTab {
   color: #aaa;
 }
 
-.toggleButtons {
-  display: flex;
-  gap: 8px;
+:global(.dark) .modeTab:hover {
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
-.toggleButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  padding: 8px 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: #555;
-}
-
-:global(.dark) .toggleButton {
-  background-color: #2a2a2a;
-  border-color: #444;
-  color: #ccc;
-}
-
-.toggleButton:hover {
-  background-color: #e9e9e9;
-}
-
-:global(.dark) .toggleButton:hover {
-  background-color: #333;
-}
-
-.toggleButton.active {
+.modeTab.active {
   background-color: #4264fb;
   color: white;
-  border-color: #3254eb;
 }
 
-:global(.dark) .toggleButton.active {
+:global(.dark) .modeTab.active {
   background-color: #3254eb;
-  border-color: #4264fb;
 }
 
-.directionTypeText {
+.modeLabel {
+  font-size: 0.75rem;
   font-weight: 500;
 }
 
-/* Location Selects */
-.locationSelect {
-  margin-bottom: 16px;
-}
-
-/* If the last location select is the last item before route info,
-   add extra margin to create visual separation */
-.locationSelect:last-of-type {
-  margin-bottom: 24px;
-}
-
-.locationSelect label {
-  display: block;
+/* Location Selectors */
+.locationSelectors {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   margin-bottom: 8px;
-  font-weight: 500;
-  font-size: 0.9rem;
-  color: #555;
 }
 
-:global(.dark) .locationSelect label {
-  color: #ccc;
-}
-
-.locationSelect select {
+.locationInputGroup {
   width: 100%;
-  padding: 8px 12px;
-  border-radius: 4px;
+}
+
+.locationLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+:global(.dark) .locationLabel {
+  color: #aaa;
+}
+
+.locationInput {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
   border: 1px solid #ddd;
   background-color: #f9f9f9;
   font-size: 0.9rem;
+  color: #333;
 }
 
-:global(.dark) .locationSelect select {
+:global(.dark) .locationInput {
   background-color: #2a2a2a;
   border-color: #444;
   color: #f1f1f1;
 }
 
+.locationDivider {
+  display: none; /* Hidden on mobile */
+  align-items: center;
+  justify-content: center;
+  color: #999;
+}
+
 /* Route Information */
 .routeInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   border-top: 1px solid #eaeaea;
   padding-top: 16px;
-  margin-top: 16px;
 }
 
 :global(.dark) .routeInfo {
   border-top-color: #333;
 }
 
-.summary {
-  background-color: #f5f5f5;
-  border-radius: 4px;
-  padding: 12px;
-  margin-bottom: 16px;
-  font-size: 0.9rem;
-  color: #333;
+/* Summary Card */
+.summaryCard {
   display: flex;
   align-items: center;
+  background-color: #f5f5f5;
+  border-radius: 8px;
+  padding: 14px;
+  gap: 12px;
 }
 
-:global(.dark) .summary {
+:global(.dark) .summaryCard {
   background-color: #2a2a2a;
-  color: #f1f1f1;
 }
 
-.steps {
-  margin-top: 16px;
+.summaryIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background-color: #4264fb;
+  border-radius: 50%;
+  color: white;
+  flex-shrink: 0;
 }
 
-.steps h4 {
-  margin-top: 0;
-  margin-bottom: 12px;
+:global(.dark) .summaryIcon {
+  background-color: #3254eb;
+}
+
+.summaryDetails {
+  flex: 1;
+}
+
+.summaryTime {
   font-size: 1.1rem;
   font-weight: 600;
   color: #333;
+  margin-bottom: 4px;
 }
 
-:global(.dark) .steps h4 {
+:global(.dark) .summaryTime {
   color: #f1f1f1;
 }
 
-.steps ol {
-  padding-left: 24px;
-  margin: 0;
-}
-
-.steps li {
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #eaeaea;
+.summaryDistance {
   font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-:global(.dark) .steps li {
-  border-bottom-color: #333;
-}
-
-.steps li:last-child {
-  border-bottom: none;
-}
-
-.stepDistance {
-  font-size: 0.8rem;
   color: #666;
-  margin-top: 4px;
 }
 
-:global(.dark) .stepDistance {
+:global(.dark) .summaryDistance {
   color: #aaa;
 }
 
-/* Responsive Styles */
-@media (max-width: 600px) {
-  .directionsPanel {
-    padding: 12px;
-  }
-  
-  .title {
-    font-size: 1.2rem;
-  }
-  
-  .locationSelect label,
-  .toggleTitle {
-    font-size: 0.85rem;
-  }
-}
-
-/* Route alternatives navigator */
+/* Route Alternatives */
 .routeAlternatives {
-  margin: 12px 0 16px;
-  padding: 12px;
   background-color: #f9f9f9;
-  border-radius: 4px;
+  border-radius: 8px;
+  padding: 12px;
   border: 1px solid #eaeaea;
 }
 
@@ -271,21 +260,35 @@
   border-color: #333;
 }
 
-.routeAlternativesTitle {
+.routeAlternativesHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
   font-size: 0.85rem;
   font-weight: 500;
   color: #555;
-  margin-bottom: 8px;
 }
 
-:global(.dark) .routeAlternativesTitle {
+:global(.dark) .routeAlternativesHeader {
   color: #ccc;
+}
+
+.routeCounter {
+  font-weight: normal;
+  color: #888;
+  font-size: 0.8rem;
+}
+
+:global(.dark) .routeCounter {
+  color: #999;
 }
 
 .routeNavigator {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
 }
 
 .routeNavButton {
@@ -300,6 +303,7 @@
   height: 28px;
   cursor: pointer;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
 :global(.dark) .routeNavButton {
@@ -324,8 +328,9 @@
 .routeIndicators {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 0 12px;
+  flex: 1;
 }
 
 .routeDot {
@@ -350,4 +355,185 @@
 
 :global(.dark) .routeDot.active {
   background-color: #3b82f6;
-} 
+}
+
+/* Steps Container */
+.stepsContainer {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #eaeaea;
+}
+
+:global(.dark) .stepsContainer {
+  background-color: #222;
+  border-color: #333;
+}
+
+.stepsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 14px;
+  background-color: #f5f5f5;
+  cursor: pointer;
+  user-select: none;
+}
+
+:global(.dark) .stepsHeader {
+  background-color: #2a2a2a;
+}
+
+.stepsHeader h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+:global(.dark) .stepsHeader h4 {
+  color: #f1f1f1;
+}
+
+.stepCount {
+  font-size: 0.8rem;
+  font-weight: normal;
+  color: #777;
+}
+
+:global(.dark) .stepCount {
+  color: #aaa;
+}
+
+.expandCollapseBtn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+:global(.dark) .expandCollapseBtn {
+  border-color: #444;
+  color: #aaa;
+}
+
+.expandCollapseBtn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+:global(.dark) .expandCollapseBtn:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Steps */
+.steps {
+  padding: 0 14px 14px;
+}
+
+.steps ol {
+  padding-left: 20px;
+  margin: 0;
+  list-style-position: outside;
+}
+
+.stepItem {
+  padding: 10px 0;
+  border-bottom: 1px solid #eaeaea;
+  font-size: 0.9rem;
+}
+
+:global(.dark) .stepItem {
+  border-bottom-color: #333;
+}
+
+.stepItem:last-child {
+  border-bottom: none;
+}
+
+.stepContent {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stepInstruction {
+  line-height: 1.4;
+}
+
+.stepDistance {
+  font-size: 0.8rem;
+  color: #777;
+}
+
+:global(.dark) .stepDistance {
+  color: #aaa;
+}
+
+/* Responsive Styles */
+@media (min-width: 768px) {
+  .directionsPanel {
+    padding: 16px;
+  }
+  
+  /* Horizontal layout for location selectors on larger screens */
+  .locationSelectors {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .locationInputGroup {
+    flex: 1;
+  }
+  
+  .locationDivider {
+    display: flex;
+    margin: 10px 6px 0;
+  }
+
+  /* Larger steps for desktop */
+  .steps ol {
+    padding-left: 24px;
+  }
+
+  .stepItem {
+    padding: 12px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .panelHeader {
+    margin-bottom: 10px;
+  }
+  
+  .title {
+    font-size: 1.2rem;
+  }
+  
+  .modeTab {
+    padding: 8px 0;
+  }
+
+  .summaryCard {
+    padding: 12px;
+  }
+
+  .summaryTime {
+    font-size: 1rem;
+  }
+
+  .summaryDistance {
+    font-size: 0.8rem;
+  }
+}
