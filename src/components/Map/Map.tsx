@@ -97,9 +97,27 @@ export const Map = () => {
           setIsMapInitialized(true);
         });
         
-        // Click handler for adding locations
+        // Add the modified click handler
+        // Handler for Cmd/Ctrl + Click (mouse)
         newMap.on('click', (e) => {
+          // Check if Meta key (Cmd on Mac) or Ctrl key is pressed
+          if (e.originalEvent.metaKey || e.originalEvent.ctrlKey) {
+            const coordinates: [number, number] = [e.lngLat.lng, e.lngLat.lat];
+            console.log('Map Cmd/Ctrl-clicked:', coordinates); // Debug log
+            openAddLocationModal(coordinates);
+          } else {
+             // Optional: Log or do nothing if modifier key isn't pressed
+             console.log('Map clicked without Cmd/Ctrl'); 
+          }
+        });
+
+        // Keep the contextmenu handler
+        // Handler for context menu (potential long press on touch)
+        newMap.on('contextmenu', (e) => {
+          // Prevent the default browser context menu
+          e.preventDefault();
           const coordinates: [number, number] = [e.lngLat.lng, e.lngLat.lat];
+          console.log('Map context menu / long press:', coordinates); // Debug log
           openAddLocationModal(coordinates);
         });
       } catch (error) {
