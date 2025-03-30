@@ -47,34 +47,45 @@ export const storageService = {
   },
 
   /**
-   * Add a location to Supabase. Assumes RLS handles user_id.
+   * Add a location to Supabase. Requires logged-in user.
    * Lets DB generate id and created_at.
    * @returns The newly created Location object from the database.
    */
   async addLocation(name: string, coordinates: [number, number]): Promise<Location> {
     try {
+      // Get the current authenticated user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+      // Throw error if user is not found (should not happen if UI prevents)
+      if (userError || !user) {
+        console.error("Error getting user for addLocation:", userError);
+        throw new Error("User must be logged in to add locations.");
+      }
+
+      // Prepare data including the user_id
       const newPointData = {
         name: name,
         longitude: coordinates[0],
         latitude: coordinates[1],
-        // user_id is assumed handled by RLS/auth context
+        user_id: user.id, // Explicitly set the user_id for the new row
         // created_at uses default now()
         // other fields use DB defaults or are nullable
       };
 
-      const { data, error } = await supabase
+      // Perform the insert operation
+      const { data, error: insertError } = await supabase
         .from('map_points')
         .insert(newPointData)
         .select('id, name, latitude, longitude, created_at, updated_at') // Select the data back
         .single(); // Expecting a single row back
 
-      if (error) {
-        console.error('Error adding location:', error);
-        throw error;
+      if (insertError) {
+        console.error('Error adding location:', insertError);
+        throw insertError; // Re-throw Supabase error
       }
 
       if (!data) {
-         throw new Error("Failed to add location: No data returned.");
+         throw new Error("Failed to add location: No data returned from insert.");
       }
 
       // Map the returned database row back to the Location type
@@ -90,7 +101,7 @@ export const storageService = {
 
     } catch (error) {
       console.error('Supabase addLocation error:', error);
-      // Re-throw the error so the context can handle UI feedback
+      // Re-throw a generic error or the specific Supabase error
       throw new Error(`Failed to add location: ${error instanceof Error ? error.message : String(error)}`);
     }
   },
