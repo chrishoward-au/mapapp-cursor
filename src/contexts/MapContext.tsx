@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
-import { v4 as uuidv4 } from 'uuid';
 import { Location } from '../types';
 import { DirectionType } from '../components/Map/Directions/DirectionsPanel';
 import { storageService } from '../services/storage';
@@ -102,7 +101,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
     setCurrentRouteIndexState(index);
   }, []);
   
-  // Load locations from storage on mount
+  // Load locations from Supabase on mount
   useEffect(() => {
     const loadLocations = async () => {
       try {
@@ -119,40 +118,28 @@ export const MapProvider = ({ children }: MapProviderProps) => {
     loadLocations();
   }, []);
   
-  // Save locations whenever they change
-  useEffect(() => {
-    if (isLoading) return; // Don't save during initial load
-    
-    const saveLocationsToStorage = async () => {
-      try {
-        await storageService.saveLocations(locations);
-      } catch (error) {
-        console.error('Failed to save locations:', error);
-      }
-    };
-    
-    saveLocationsToStorage();
-  }, [locations, isLoading]);
-  
   // Panel toggle handler
   const togglePanel = useCallback((panel: 'locations' | 'directions') => {
     setActivePanel(current => current === panel ? 'none' : panel);
   }, []);
   
   // Location handlers
-  const addLocation = useCallback((name: string, coordinates: [number, number]) => {
-    const newLocation: Location = {
-      id: uuidv4(),
-      name,
-      coordinates,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    setLocations(prev => [...prev, newLocation]);
+  const addLocation = useCallback(async (name: string, coordinates: [number, number]) => {
+    try {
+      const addedLocation = await storageService.addLocation(name, coordinates);
+      setLocations(prev => [...prev, addedLocation]);
+    } catch (error) {
+      console.error("Failed to add location:", error);
+    }
   }, []);
   
-  const deleteLocation = useCallback((locationId: string) => {
-    setLocations(prev => prev.filter(loc => loc.id !== locationId));
+  const deleteLocation = useCallback(async (locationId: string) => {
+    try {
+      await storageService.deleteLocation(locationId);
+      setLocations(prev => prev.filter(loc => loc.id !== locationId));
+    } catch (error) {
+      console.error("Failed to delete location:", error);
+    }
   }, []);
   
   const selectLocation = useCallback((location: Location) => {
