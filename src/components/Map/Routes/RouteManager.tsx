@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useMapContext } from '../../../contexts/MapContext';
-import { fetchRoute, updateRouteOnMap, fitMapToRoute, setupRouteLayer } from '../../../services/mapService';
-import { RouteOption } from '../../../services/mapService';
+import { fetchRoute, updateRouteOnMap, fitMapToRoute, setupRouteLayer, RouteOption } from '../../../services/mapService';
 
 // Interface for route info passed back to parent
 export interface RouteInfo {
@@ -15,9 +14,9 @@ export interface RouteInfo {
   }>;
   routeOptions?: number;
   currentRouteIndex?: number;
-  startLocation: Location;
-  endLocation: Location;
-  directionType: DirectionType;
+  startLocation?: Location | null;
+  endLocation?: Location | null;
+  directionType?: DirectionType;
 }
 
 // Import DirectionType from DirectionsPanel
@@ -31,84 +30,110 @@ export const RouteManager: React.FC = () => {
     routeStartLocation,
     routeEndLocation,
     routeDirectionType,
-    routeInfo,
-    updateRouteInfo
+    updateRouteInfo,
+    currentRouteIndex
   } = useMapContext();
   
+  // State to hold all fetched routes for the current origin/destination/type
   const [availableRoutes, setAvailableRoutes] = useState<RouteOption[]>([]);
-  const [currentRouteIndex, setCurrentRouteIndex] = useState<number>(0);
   
-  // Calculate route when inputs change
+  // Effect 1: Fetch routes when parameters change
   useEffect(() => {
-    if (!map || !routeStartLocation || !routeEndLocation) return;
+    // Ensure we have map and both locations selected
+    if (!map || !routeStartLocation || !routeEndLocation) {
+      setAvailableRoutes([]); // Clear old routes if parameters are incomplete
+      updateRouteInfo(null); // Clear route info in context
+      return;
+    }
     
+    let isMounted = true; // Flag to prevent state updates if component unmounts during fetch
+
     const getRoute = async () => {
-      // Ensure route layer is set up with the correct color for this direction type
-      setupRouteLayer(map, routeDirectionType);
-      
-      // Fetch route from Mapbox API
-      const routes = await fetchRoute(
-        routeStartLocation.coordinates,
-        routeEndLocation.coordinates,
-        routeDirectionType
-      );
-      
-      if (routes.length === 0) return;
-      
-      // Store available routes
-      setAvailableRoutes(routes);
-      
-      // Display the first route
-      const route = routes[0];
-      if (route.geometry && route.geometry.coordinates) {
-        // Update route info in context (will trigger the other effect to display the route)
-        if (routeStartLocation && routeEndLocation) {
-          updateRouteInfo({
-            distance: route.distance,
-            duration: route.duration,
-            steps: route.steps,
-            routeOptions: routes.length,
-            currentRouteIndex: 0,
-            startLocation: routeStartLocation,
-            endLocation: routeEndLocation,
-            directionType: routeDirectionType
-          });
+      try {
+        // Fetch all alternative routes from Mapbox API
+        const routes = await fetchRoute(
+          routeStartLocation.coordinates,
+          routeEndLocation.coordinates,
+          routeDirectionType
+        );
+        
+        if (!isMounted) return; // Don't update state if unmounted
+
+        if (routes.length > 0) {
+          setAvailableRoutes(routes);
+          // Note: The display update (map and info panel) will be handled
+          // by the second useEffect, triggered by the change in availableRoutes
+          // or if currentRouteIndex is already non-zero.
+        } else {
+          // No routes found
+          setAvailableRoutes([]);
+          updateRouteInfo(null); // Clear context info
+          // Maybe add user feedback here (e.g., toast notification)
+          console.warn("No routes found for the selected criteria.");
         }
+      } catch (error) {
+        if (!isMounted) return;
+        console.error("Error fetching route:", error);
+        setAvailableRoutes([]);
+        updateRouteInfo(null); // Clear context info on error
       }
     };
     
     getRoute();
-  }, [map, routeStartLocation, routeEndLocation, routeDirectionType, updateRouteInfo, activePanel]);
+
+    // Cleanup function to set the mounted flag to false
+    return () => {
+      isMounted = false;
+    };
+  }, [map, routeStartLocation, routeEndLocation, routeDirectionType]); 
   
-  // Display the selected route when routes are available or route index changes
+  // Effect 2: Display the selected route when routes are available or the index changes
   useEffect(() => {
+    // Ensure map is ready and routes have been loaded
     if (!map || availableRoutes.length === 0) return;
     
-    // Use the route index from context, defaulting to local state if not available
-    const routeIndex = routeInfo?.currentRouteIndex !== undefined ? routeInfo.currentRouteIndex : currentRouteIndex;
+    // Validate the index from context
+    const validIndex = currentRouteIndex >= 0 && currentRouteIndex < availableRoutes.length 
+                         ? currentRouteIndex 
+                         : 0; // Default to 0 if index is invalid
+
+    // Get the selected route based on the (validated) context index
+    const route = availableRoutes[validIndex];
+    if (!route) return; // Should not happen if logic is correct, but safeguard
     
-    // Update local state if needed (for initial load)
-    if (routeIndex !== currentRouteIndex) {
-      setCurrentRouteIndex(routeIndex);
-    }
-    
-    const route = availableRoutes[routeIndex];
-    if (!route) return;
-    
-    // Make sure the layer has the right color before updating
+    // Ensure the map layer uses the correct color/style for the current direction type
     setupRouteLayer(map, routeDirectionType);
     
-    // Update route on map
-    updateRouteOnMap(map, route.geometry.coordinates);
+    // Update the route line on the map
+    if (route.geometry && route.geometry.coordinates) {
+      updateRouteOnMap(map, route.geometry.coordinates);
     
-    // Adjust view to show route with appropriate padding based on panel state
-    const padding = activePanel === 'directions' 
-      ? { top: 50, bottom: 50, left: 350, right: 50 }
-      : 50;
-    
-    fitMapToRoute(map, route.geometry.coordinates, padding);
-  }, [map, availableRoutes, activePanel, routeInfo, currentRouteIndex, routeDirectionType, setCurrentRouteIndex]);
+      // Adjust map view to fit the route, considering the active panel for padding
+      const padding = activePanel === 'directions' 
+        ? { top: 50, bottom: 50, left: 350, right: 50 } // More padding on left if directions panel is open
+        : 50; // Default padding
+      fitMapToRoute(map, route.geometry.coordinates, padding);
+
+      // Update the route information in the context
+      // This will update the DirectionsPanel display
+      updateRouteInfo({
+        distance: route.distance,
+        duration: route.duration,
+        steps: route.steps,
+        routeOptions: availableRoutes.length,
+        currentRouteIndex: validIndex,
+        startLocation: routeStartLocation, 
+        endLocation: routeEndLocation,
+        directionType: routeDirectionType
+      });
+    } else {
+      // Handle case where selected route has no geometry (should be rare)
+      console.warn("Selected route is missing geometry:", route);
+      updateRouteInfo(null); // Clear info if route is invalid
+    }
+
+  }, [map, availableRoutes, currentRouteIndex, activePanel, routeDirectionType, updateRouteInfo, routeStartLocation, routeEndLocation]); 
   
-  // This component doesn't render anything visible
+  // This component does not render any visible UI elements itself
   return null;
 };

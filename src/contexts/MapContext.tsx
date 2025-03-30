@@ -40,10 +40,11 @@ interface MapContextType {
   routeEndLocation: Location | null;
   routeDirectionType: DirectionType;
   routeInfo: RouteInfo | null;
+  currentRouteIndex: number;
   setRouteStartLocation: (location: Location | null) => void;
   setRouteEndLocation: (location: Location | null) => void;
   setRouteDirectionType: (type: DirectionType) => void;
-  updateRouteInfo: (info: RouteInfo) => void;
+  updateRouteInfo: (info: RouteInfo | null) => void;
   setCurrentRouteIndex: (index: number) => void;
   
   // Map utilities
@@ -87,16 +88,19 @@ export const MapProvider = ({ children }: MapProviderProps) => {
   const [routeEndLocation, setRouteEndLocation] = useState<Location | null>(null);
   const [routeDirectionType, setRouteDirectionType] = useState<DirectionType>('walking');
   const [routeInfo, setRouteInfo] = useState<RouteInfo | null>(null);
+  const [currentRouteIndex, setCurrentRouteIndexState] = useState<number>(0);
   
-  // Handle route index changes
+  // Update route info (called by RouteManager)
+  const updateRouteInfo = useCallback((info: RouteInfo | null) => {
+    setRouteInfo(info);
+    // Only update index if info is not null, otherwise reset to 0
+    setCurrentRouteIndexState(info?.currentRouteIndex ?? 0);
+  }, []);
+
+  // Set the selected route index (called by DirectionsPanel)
   const setCurrentRouteIndex = useCallback((index: number) => {
-    if (routeInfo) {
-      setRouteInfo({
-        ...routeInfo,
-        currentRouteIndex: index
-      });
-    }
-  }, [routeInfo]);
+    setCurrentRouteIndexState(index);
+  }, []);
   
   // Load locations from storage on mount
   useEffect(() => {
@@ -169,11 +173,6 @@ export const MapProvider = ({ children }: MapProviderProps) => {
   const closeAddLocationModal = useCallback(() => {
     setIsAddLocationModalOpen(false);
     setNewLocationCoordinates(null);
-  }, []);
-  
-  // Route handlers
-  const updateRouteInfo = useCallback((info: RouteInfo) => {
-    setRouteInfo(info);
   }, []);
   
   // Map utilities
@@ -254,6 +253,7 @@ export const MapProvider = ({ children }: MapProviderProps) => {
         routeEndLocation,
         routeDirectionType,
         routeInfo,
+        currentRouteIndex,
         setRouteStartLocation,
         setRouteEndLocation,
         setRouteDirectionType,
