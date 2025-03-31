@@ -1,8 +1,9 @@
 import React from 'react';
-import { List, Compass, Maximize, Globe, Map as MapIcon } from 'lucide-react';
+import { List, Compass, Maximize, Globe, Map as MapIcon, LogOut } from 'lucide-react';
 import styles from '../Map.module.css';
 import { DarkModeToggle } from '../../DarkModeToggle';
 import { useMapContext } from '../../../contexts/MapContext';
+import { useAuth } from '../../../contexts/AuthContext';
 import { changeMapStyle } from '../../../services/mapService';
 
 export const ActionBar: React.FC = () => {
@@ -15,6 +16,8 @@ export const ActionBar: React.FC = () => {
     mapStyle,
     setMapStyle
   } = useMapContext();
+
+  const { signOut } = useAuth();
 
   const handleMapStyleChange = () => {
     if (!map) return;
@@ -67,6 +70,15 @@ export const ActionBar: React.FC = () => {
       </button>
 
       <DarkModeToggle />
+
+      <button
+        className={styles.actionButton}
+        onClick={signOut}
+        aria-label="Sign out"
+        title="Sign out"
+      >
+        <LogOut size={20} />
+      </button>
     </div>
   );
 };

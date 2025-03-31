@@ -1,0 +1,55 @@
+/* Basic styling for the auth form container */
+.authContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f0f2f5; /* Light background */
+}
+
+:global(.dark) .authContainer {
+   background-color: #121212; /* Dark background */
+}
+
+
+.authBox {
+  background-color: white;
+  padding: 30px 40px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+}
+
+:global(.dark) .authBox {
+  background-color: #1e1e1e; /* Dark box background */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  /* Ensure Supabase Auth UI theme matches this or override its variables */
+}
+
+.authTitle {
+  margin-bottom: 10px;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+:global(.dark) .authTitle {
+  color: #f1f1f1;
+}
+
+.authSubtitle {
+  margin-bottom: 25px;
+  font-size: 0.95rem;
+  color: #666;
+}
+
+:global(.dark) .authSubtitle {
+  color: #aaa;
+}
+
+/* You might need further overrides for the Supabase Auth UI elements */
+/* Inspect elements in dev tools and target classes like */
+/* .supabase-auth-ui_ui-input, .supabase-auth-ui_ui-button */
+
+/* Add any other necessary styles here */ 
