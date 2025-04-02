@@ -14,20 +14,34 @@ const DEFAULT_PREFERENCES: UserPreferences = {
  */
 export const storageService = {
   /**
-   * Get locations from Supabase for the logged-in user (assumes RLS is set up)
+   * Get locations from Supabase for the logged-in user (applies filter by user_id)
    */
   async getLocations(): Promise<Location[]> {
     try {
-      // Select only the columns corresponding to the Location type for now
+      // Get the current authenticated user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+      // Log debug information about the current user
+      console.log('Current authenticated user:', user?.id ? `User ID: ${user.id}` : 'No user logged in');
+      
+      if (userError || !user) {
+        console.warn("No authenticated user found, no locations will be shown", userError);
+        return [];
+      }
+
+      // Explicitly filter by the current user_id
       const { data, error } = await supabase
         .from('map_points')
-        .select('id, name, latitude, longitude, created_at, updated_at'); // Ensure column names match DB
+        .select('id, name, latitude, longitude, created_at, updated_at, user_id')
+        .eq('user_id', user.id);
 
       if (error) {
         console.error('Error fetching locations:', error);
         throw error; // Re-throw the error to be handled by the caller
       }
 
+      console.log(`Found ${data?.length || 0} locations for user ${user.id}`);
+      
       // Map Supabase rows to Location objects
       const locations: Location[] = data?.map(point => ({
         id: point.id,

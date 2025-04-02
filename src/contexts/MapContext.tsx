@@ -4,6 +4,7 @@ import { Location } from '../types';
 import { DirectionType } from '../components/Map/Directions/DirectionsPanel';
 import { storageService } from '../services/storage';
 import { RouteInfo } from '../components/Map/Routes/RouteManager';
+import { useAuth } from './AuthContext'; // Import the Auth context
 
 export type PanelType = 'none' | 'locations' | 'directions';
 export type MapStyleType = 'map' | 'satellite';
@@ -66,6 +67,9 @@ interface MapProviderProps {
 }
 
 export const MapProvider = ({ children }: MapProviderProps) => {
+  // Get authentication context
+  const { user } = useAuth();
+  
   // Map state
   const [map, setMap] = useState<mapboxgl.Map | null>(null);
   const [isMapInitialized, setIsMapInitialized] = useState(false);
@@ -101,22 +105,32 @@ export const MapProvider = ({ children }: MapProviderProps) => {
     setCurrentRouteIndexState(index);
   }, []);
   
-  // Load locations from Supabase on mount
+  // Load locations from Supabase when user changes or on mount
   useEffect(() => {
     const loadLocations = async () => {
       try {
         setIsLoading(true);
+        
+        // Clear locations if there's no user
+        if (!user) {
+          console.log('No authenticated user, clearing locations');
+          setLocations([]);
+          return;
+        }
+        
+        console.log('Loading locations for user:', user.id);
         const storedLocations = await storageService.getLocations();
         setLocations(storedLocations);
       } catch (error) {
         console.error('Failed to load locations:', error);
+        setLocations([]); // Ensure locations are cleared on error
       } finally {
         setIsLoading(false);
       }
     };
     
     loadLocations();
-  }, []);
+  }, [user]); // Re-run when user changes
   
   // Panel toggle handler
   const togglePanel = useCallback((panel: 'locations' | 'directions') => {
